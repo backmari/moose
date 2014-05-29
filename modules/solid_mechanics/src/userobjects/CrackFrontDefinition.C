@@ -292,14 +292,62 @@ CrackFrontDefinition::orderCrackFrontNodes(std::set<unsigned int> nodes)
 
     }
 
-    if (end_nodes.size() != 2)
+    //For embedded crack with closed loop of crack front nodes, must pick the end nodes
+    if (end_nodes.size() == 0)
     {
-      mooseError("In CrackFrontDefinition number of end nodes != 2.  Number end nodes = "<<end_nodes.size());
+      unsigned int minnode;
+      unsigned int maxnode;
+      unsigned int xnode;
+      Real distmin(1.0e30);
+      Real distmax(0);
+      Real xmax(0);
+      //Pick the node farthest from the origin as the end node, or the one with
+      //the greatest x coordinate if the nodes are equidistant from the origin
+      for (std::set<unsigned int>::iterator nit = nodes.begin(); nit != nodes.end(); ++nit )
+      {
+        Node & nodexyz = _mesh.node(*nit);
+        Real dist = nodexyz.size();
+        Real xdist = nodexyz(0);
+        if (dist > distmax)
+        {
+          distmax = dist;
+          maxnode = *nit;
+        }
+        if (dist < distmin)
+        {
+          distmin = dist;
+          minnode = *nit;
+        }
+        if (xdist > xmax)
+        {
+          xmax = xdist;
+          xnode = *nit;
+        }
+      }
+
+      unsigned int endnode;
+      if (distmax - distmin > 1e-6)
+        endnode = maxnode;
+      else
+        endnode = xnode;
+      end_nodes.push_back(endnode);
+      
+      std::vector<unsigned int> end_node_line_elems = node_to_line_elem_map[endnode];
+      // Pick the first line elem?
+      std::vector<unsigned int> end_line_elem = line_elems[end_node_line_elems[0]];
+      for (unsigned int i=0; i<end_line_elem.size(); ++i)
+      {
+        unsigned int line_elem_node = end_line_elem[i];
+        if (line_elem_node != endnode)
+          end_nodes.push_back(line_elem_node);
+      }
+      
     }
-
-    //Rearrange the order of the end nodes if needed
-    orderEndNodes(end_nodes);
-
+    else if (end_nodes.size() == 2) //Rearrange the order of the end nodes if needed
+      orderEndNodes(end_nodes);
+    else
+      mooseError("In CrackFrontDefinition wrong number of end nodes.  Number end nodes = "<<end_nodes.size());
+    
     //Create an ordered list of the nodes going along the line of the crack front
     _ordered_crack_front_nodes.push_back(end_nodes[0]);
 
@@ -315,6 +363,8 @@ CrackFrontDefinition::orderCrackFrontNodes(std::set<unsigned int> nodes)
         for (unsigned int j=0; j<curr_line_elem.size(); ++j)
         {
           unsigned int line_elem_node = curr_line_elem[j];
+          if (last_node == end_nodes[0] && line_elem_node == end_nodes[1]) //wrong direction around embedded crack
+            continue;              
           if (line_elem_node != last_node &&
               line_elem_node != second_last_node)
           {
