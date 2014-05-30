@@ -460,12 +460,14 @@ CrackFrontDefinition::maxNode(std::vector<Node *>& nodes)
   for (unsigned int i=0; i<nodes.size(); ++i)
   {
     Real x = (*nodes[i])(0);
+    if (x > max_x)
+      max_x = x;
+  }
+  for (unsigned int i=0; i<nodes.size(); ++i)
+  {
+    Real x = (*nodes[i])(0);
     if (x > max_x - _tol)
-    {
-      if (x > max_x)
-        max_x = x;
       max_x_nodes.push_back(nodes[i]);
-    }
   }
   if (max_x_nodes.size() > 1)
   {
@@ -474,12 +476,14 @@ CrackFrontDefinition::maxNode(std::vector<Node *>& nodes)
     for (unsigned int i=0; i<nodes.size(); ++i)
     {
       Real y = (*nodes[i])(1);
+      if (y > max_y)
+        max_y = y;
+    }
+    for (unsigned int i=0; i<nodes.size(); ++i)
+    {
+      Real y = (*nodes[i])(1);
       if (y > max_y - _tol)
-      {
-        if (y > max_y)
-          max_y = y;
         max_y_nodes.push_back(nodes[i]);
-      }
     }
     if (max_y_nodes.size() > 1)
     {
@@ -488,12 +492,14 @@ CrackFrontDefinition::maxNode(std::vector<Node *>& nodes)
       for (unsigned int i=0; i<nodes.size(); ++i)
       {
         Real z = (*nodes[i])(2);
+        if (z > max_z)
+          max_z = z;
+      }
+      for (unsigned int i=0; i<nodes.size(); ++i)
+      {
+        Real z = (*nodes[i])(2);
         if (z > max_z - _tol)
-        {
-          if (z > max_z)
-            max_z = z;
           max_z_nodes.push_back(nodes[i]);
-        }
       }
       if (max_z_nodes.size() > 1)
         mooseError("Multiple nodes with same x,y,z coordinates within tolerance");
