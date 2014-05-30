@@ -26,6 +26,8 @@ void addCrackFrontDefinitionParams(InputParameters& params)
   params.addRangeCheckedParam<unsigned int>("axis_2d", 2, "axis_2d>=0 & axis_2d<=2", "Out of plane axis for models treated as two-dimensional (0=x, 1=y, 2=z)");
 }
 
+const Real CrackFrontDefinition::_tol = 1e-14;
+
 CrackFrontDefinition::CrackFrontDefinition(const std::string & name, InputParameters parameters) :
     GeneralUserObject(name, parameters),
     BoundaryRestrictable(name, parameters),
@@ -154,7 +156,6 @@ CrackFrontDefinition::getCrackFrontNodes(std::set<unsigned int>& nodes)
       //Delete all but one node if they are collinear in the axis normal to the 2d plane
       unsigned int axis0;
       unsigned int axis1;
-      Real tol = 1e-14;
 
       switch (_axis_2d)
       {
@@ -185,8 +186,8 @@ CrackFrontDefinition::getCrackFrontNodes(std::set<unsigned int>& nodes)
         }
         else
         {
-          if ((std::abs(curr_node(axis0) - node0coor0) > tol) ||
-              (std::abs(curr_node(axis1) - node0coor1) > tol))
+          if ((std::abs(curr_node(axis0) - node0coor0) > _tol) ||
+              (std::abs(curr_node(axis1) - node0coor1) > _tol))
           {
             mooseError("Boundary provided in CrackFrontDefinition contains "<<nodes.size()<<" nodes, which are not collinear in the "<<_axis_2d<<" axis.  Must contain either 1 node or collinear nodes to treat as 2D.");
           }
@@ -201,7 +202,7 @@ CrackFrontDefinition::getCrackFrontNodes(std::set<unsigned int>& nodes)
 }
 
 void
-CrackFrontDefinition::orderCrackFrontNodes(std::set<unsigned int> nodes)
+CrackFrontDefinition::orderCrackFrontNodes(std::set<unsigned int> &nodes)
 {
   _ordered_crack_front_nodes.clear();
   if (nodes.size() < 1)
@@ -293,56 +294,8 @@ CrackFrontDefinition::orderCrackFrontNodes(std::set<unsigned int> nodes)
     }
 
     //For embedded crack with closed loop of crack front nodes, must pick the end nodes
-    if (end_nodes.size() == 0)
-    {
-      unsigned int minnode;
-      unsigned int maxnode;
-      unsigned int xnode;
-      Real distmin(1.0e30);
-      Real distmax(0);
-      Real xmax(0);
-      //Pick the node farthest from the origin as the end node, or the one with
-      //the greatest x coordinate if the nodes are equidistant from the origin
-      for (std::set<unsigned int>::iterator nit = nodes.begin(); nit != nodes.end(); ++nit )
-      {
-        Node & nodexyz = _mesh.node(*nit);
-        Real dist = nodexyz.size();
-        Real xdist = nodexyz(0);
-        if (dist > distmax)
-        {
-          distmax = dist;
-          maxnode = *nit;
-        }
-        if (dist < distmin)
-        {
-          distmin = dist;
-          minnode = *nit;
-        }
-        if (xdist > xmax)
-        {
-          xmax = xdist;
-          xnode = *nit;
-        }
-      }
-
-      unsigned int endnode;
-      if (distmax - distmin > 1e-6)
-        endnode = maxnode;
-      else
-        endnode = xnode;
-      end_nodes.push_back(endnode);
-      
-      std::vector<unsigned int> end_node_line_elems = node_to_line_elem_map[endnode];
-      // Pick the first line elem?
-      std::vector<unsigned int> end_line_elem = line_elems[end_node_line_elems[0]];
-      for (unsigned int i=0; i<end_line_elem.size(); ++i)
-      {
-        unsigned int line_elem_node = end_line_elem[i];
-        if (line_elem_node != endnode)
-          end_nodes.push_back(line_elem_node);
-      }
-      
-    }
+    if (end_nodes.size() == 0) //Crack front is a loop.  Pick nodes to be end nodes.
+      pickLoopCrackEndNodes(end_nodes, nodes, node_to_line_elem_map, line_elems);
     else if (end_nodes.size() == 2) //Rearrange the order of the end nodes if needed
       orderEndNodes(end_nodes);
     else
@@ -363,7 +316,7 @@ CrackFrontDefinition::orderCrackFrontNodes(std::set<unsigned int> nodes)
         for (unsigned int j=0; j<curr_line_elem.size(); ++j)
         {
           unsigned int line_elem_node = curr_line_elem[j];
-          if (last_node == end_nodes[0] && line_elem_node == end_nodes[1]) //wrong direction around embedded crack
+          if (last_node == end_nodes[0] && line_elem_node == end_nodes[1]) //wrong direction around closed loop
             continue;              
           if (line_elem_node != last_node &&
               line_elem_node != second_last_node)
@@ -390,7 +343,6 @@ CrackFrontDefinition::orderEndNodes(std::vector<unsigned int> &end_nodes)
   //Choose the node to be the first node.  Do that based on undeformed coordinates for repeatability.
   Node & node0 = _mesh.node(end_nodes[0]);
   Node & node1 = _mesh.node(end_nodes[1]);
-  Real tol = 1e-14;
 
   unsigned int num_pos_coor0 = 0;
   unsigned int num_pos_coor1 = 0;
@@ -400,11 +352,11 @@ CrackFrontDefinition::orderEndNodes(std::vector<unsigned int> &end_nodes)
   {
     dist_from_origin0 += node0(i)*node0(i);
     dist_from_origin1 += node1(i)*node1(i);
-    if (node0(i) > tol)
+    if (node0(i) > _tol)
     {
       ++num_pos_coor0;
     }
-    if (node1(i) > tol)
+    if (node1(i) > _tol)
     {
       ++num_pos_coor1;
     }
@@ -419,7 +371,7 @@ CrackFrontDefinition::orderEndNodes(std::vector<unsigned int> &end_nodes)
   }
   else
   {
-    if (std::abs(dist_from_origin1 - dist_from_origin0) > tol)
+    if (std::abs(dist_from_origin1 - dist_from_origin0) > _tol)
     {
       if (dist_from_origin1 < dist_from_origin0)
       {
@@ -440,6 +392,119 @@ CrackFrontDefinition::orderEndNodes(std::vector<unsigned int> &end_nodes)
     end_nodes[1] = end_nodes[0];
     end_nodes[0] = tmp_node;
   }
+}
+
+void
+CrackFrontDefinition::pickLoopCrackEndNodes(std::vector<unsigned int> &end_nodes,
+                                            std::set<unsigned int> &nodes,
+                                            std::map<unsigned int, std::vector<unsigned int> > &node_to_line_elem_map,
+                                            std::vector<std::vector<unsigned int> > &line_elems)
+{
+  unsigned int max_dist_node;
+  Real min_dist = std::numeric_limits<Real>::max();
+  Real max_dist = -std::numeric_limits<Real>::max();
+  //Pick the node farthest from the origin as the end node, or the one with
+  //the greatest x coordinate if the nodes are equidistant from the origin
+  for (std::set<unsigned int>::iterator nit = nodes.begin(); nit != nodes.end(); ++nit )
+  {
+    Node & node = _mesh.node(*nit);
+    Real dist = node.size();
+    if (dist > max_dist)
+    {
+      max_dist = dist;
+      max_dist_node = *nit;
+    }
+    else if (dist < min_dist)
+      min_dist = dist;
+  }
+
+  unsigned int end_node;
+  if (max_dist - min_dist > _tol)
+    end_node = max_dist_node;
+  else
+  {
+    std::vector<Node *> node_vec;
+    for (std::set<unsigned int>::iterator nit = nodes.begin(); nit != nodes.end(); ++nit )
+      node_vec.push_back(_mesh.nodePtr(*nit));
+    end_node = maxNode(node_vec);
+  }
+
+  end_nodes.push_back(end_node);
+  
+  //Find the two nodes connected to the node identified as the end node, and pick one of those to be the other end node
+  std::vector<unsigned int> end_node_line_elems = node_to_line_elem_map[end_node];
+  if (end_node_line_elems.size() != 2)
+    mooseError("Crack front nodes are in a loop, but crack end node is only connected to one other node");
+  std::vector<Node *> candidate_other_end_nodes;
+
+  for (unsigned int i=0; i<2; ++i)
+  {
+    std::vector<unsigned int> end_line_elem = line_elems[end_node_line_elems[i]];
+    for (unsigned int j=0; j<end_line_elem.size(); ++j)
+    {
+      unsigned int line_elem_node = end_line_elem[j];
+      if (line_elem_node != end_node)
+        candidate_other_end_nodes.push_back(_mesh.nodePtr(line_elem_node));
+    }
+  }
+  if (candidate_other_end_nodes.size() != 2)
+    mooseError("Crack front nodes are in a loop, but crack end node is not connected to two other nodes");
+  end_nodes.push_back(maxNode(candidate_other_end_nodes));
+}
+
+unsigned int
+CrackFrontDefinition::maxNode(std::vector<Node *>& nodes)
+{
+  Real max_x = -std::numeric_limits<Real>::max();
+  std::vector<Node *> max_x_nodes;
+  for (unsigned int i=0; i<nodes.size(); ++i)
+  {
+    Real x = (*nodes[i])(0);
+    if (x > max_x - _tol)
+    {
+      if (x > max_x)
+        max_x = x;
+      max_x_nodes.push_back(nodes[i]);
+    }
+  }
+  if (max_x_nodes.size() > 1)
+  {
+    Real max_y = -std::numeric_limits<Real>::max();
+    std::vector<Node *> max_y_nodes;
+    for (unsigned int i=0; i<nodes.size(); ++i)
+    {
+      Real y = (*nodes[i])(1);
+      if (y > max_y - _tol)
+      {
+        if (y > max_y)
+          max_y = y;
+        max_y_nodes.push_back(nodes[i]);
+      }
+    }
+    if (max_y_nodes.size() > 1)
+    {
+      Real max_z = -std::numeric_limits<Real>::max();
+      std::vector<Node *> max_z_nodes;
+      for (unsigned int i=0; i<nodes.size(); ++i)
+      {
+        Real z = (*nodes[i])(2);
+        if (z > max_z - _tol)
+        {
+          if (z > max_z)
+            max_z = z;
+          max_z_nodes.push_back(nodes[i]);
+        }
+      }
+      if (max_z_nodes.size() > 1)
+        mooseError("Multiple nodes with same x,y,z coordinates within tolerance");
+      else
+        return max_z_nodes[0]->id();
+    }
+    else
+      return max_y_nodes[0]->id();
+  }
+  else
+    return max_x_nodes[0]->id();
 }
 
 void
