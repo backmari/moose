@@ -93,7 +93,7 @@ protected:
                              std::set<unsigned int> &nodes,
                              std::map<unsigned int, std::vector<unsigned int> > &node_to_line_elem_map,
                              std::vector<std::vector<unsigned int> > &line_elems);
-  unsigned int maxNode(std::vector<Node *>& nodes);
+  unsigned int maxNodeCoor(std::vector<Node *>& nodes, unsigned int dir0=0);
   void updateCrackFrontGeometry();
   void updateDataForCrackDirection();
   RealVectorValue calculateCrackFrontDirection(const Node* crack_front_node,

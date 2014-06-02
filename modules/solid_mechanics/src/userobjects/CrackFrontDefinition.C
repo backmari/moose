@@ -426,7 +426,7 @@ CrackFrontDefinition::pickLoopCrackEndNodes(std::vector<unsigned int> &end_nodes
     std::vector<Node *> node_vec;
     for (std::set<unsigned int>::iterator nit = nodes.begin(); nit != nodes.end(); ++nit )
       node_vec.push_back(_mesh.nodePtr(*nit));
-    end_node = maxNode(node_vec);
+    end_node = maxNodeCoor(node_vec);
   }
 
   end_nodes.push_back(end_node);
@@ -449,68 +449,90 @@ CrackFrontDefinition::pickLoopCrackEndNodes(std::vector<unsigned int> &end_nodes
   }
   if (candidate_other_end_nodes.size() != 2)
     mooseError("Crack front nodes are in a loop, but crack end node is not connected to two other nodes");
-  end_nodes.push_back(maxNode(candidate_other_end_nodes));
+  end_nodes.push_back(maxNodeCoor(candidate_other_end_nodes,1));
 }
 
 unsigned int
-CrackFrontDefinition::maxNode(std::vector<Node *>& nodes)
+CrackFrontDefinition::maxNodeCoor(std::vector<Node *>& nodes, unsigned int dir0)
 {
-  Real max_x = -std::numeric_limits<Real>::max();
-  std::vector<Node *> max_x_nodes;
-  for (unsigned int i=0; i<nodes.size(); ++i)
+  Real dirs[3];
+  if (dir0 == 0)
   {
-    Real x = (*nodes[i])(0);
-    if (x > max_x)
-      max_x = x;
+    dirs[0]=0;
+    dirs[1]=1;
+    dirs[2]=2;
   }
-  for (unsigned int i=0; i<nodes.size(); ++i)
+  else if (dir0 == 1)
   {
-    Real x = (*nodes[i])(0);
-    if (x > max_x - _tol)
-      max_x_nodes.push_back(nodes[i]);
+    dirs[0]=1;
+    dirs[1]=2;
+    dirs[2]=0;
   }
-  if (max_x_nodes.size() > 1)
+  else if (dir0 == 2)
   {
-    Real max_y = -std::numeric_limits<Real>::max();
-    std::vector<Node *> max_y_nodes;
-    for (unsigned int i=0; i<nodes.size(); ++i)
-    {
-      Real y = (*nodes[i])(1);
-      if (y > max_y)
-        max_y = y;
-    }
-    for (unsigned int i=0; i<nodes.size(); ++i)
-    {
-      Real y = (*nodes[i])(1);
-      if (y > max_y - _tol)
-        max_y_nodes.push_back(nodes[i]);
-    }
-    if (max_y_nodes.size() > 1)
-    {
-      Real max_z = -std::numeric_limits<Real>::max();
-      std::vector<Node *> max_z_nodes;
-      for (unsigned int i=0; i<nodes.size(); ++i)
-      {
-        Real z = (*nodes[i])(2);
-        if (z > max_z)
-          max_z = z;
-      }
-      for (unsigned int i=0; i<nodes.size(); ++i)
-      {
-        Real z = (*nodes[i])(2);
-        if (z > max_z - _tol)
-          max_z_nodes.push_back(nodes[i]);
-      }
-      if (max_z_nodes.size() > 1)
-        mooseError("Multiple nodes with same x,y,z coordinates within tolerance");
-      else
-        return max_z_nodes[0]->id();
-    }
-    else
-      return max_y_nodes[0]->id();
+    dirs[0]=2;
+    dirs[1]=0;
+    dirs[2]=1;
   }
   else
-    return max_x_nodes[0]->id();
+    mooseError("Invalid dir0 in CrackFrontDefinition::maxNodeCoor()");
+
+  Real max_coor0 = -std::numeric_limits<Real>::max();
+  std::vector<Node *> max_coor0_nodes;
+  for (unsigned int i=0; i<nodes.size(); ++i)
+  {
+    Real coor0 = (*nodes[i])(dirs[0]);
+    if (coor0 > max_coor0)
+      max_coor0 = coor0;
+  }
+  for (unsigned int i=0; i<nodes.size(); ++i)
+  {
+    Real coor0 = (*nodes[i])(dirs[0]);
+    if (std::abs(coor0 - max_coor0) <= _tol)
+      max_coor0_nodes.push_back(nodes[i]);
+  }
+  if (max_coor0_nodes.size() > 1)
+  {
+    Real max_coor1 = -std::numeric_limits<Real>::max();
+    std::vector<Node *> max_coor1_nodes;
+    for (unsigned int i=0; i<nodes.size(); ++i)
+    {
+      Real coor1 = (*nodes[i])(dirs[1]);
+      if (coor1 > max_coor1)
+        max_coor1 = coor1;
+    }
+    for (unsigned int i=0; i<nodes.size(); ++i)
+    {
+      Real coor1 = (*nodes[i])(dirs[1]);
+      if (std::abs(coor1 - max_coor1) <= _tol)
+        max_coor1_nodes.push_back(nodes[i]);
+    }
+    if (max_coor1_nodes.size() > 1)
+    {
+      Real max_coor2 = -std::numeric_limits<Real>::max();
+      std::vector<Node *> max_coor2_nodes;
+      for (unsigned int i=0; i<nodes.size(); ++i)
+      {
+        Real coor2 = (*nodes[i])(dirs[2]);
+        if (coor2 > max_coor2)
+          max_coor2 = coor2;
+      }
+      for (unsigned int i=0; i<nodes.size(); ++i)
+      {
+        Real coor2 = (*nodes[i])(dirs[2]);
+        if (std::abs(coor2 - max_coor2) <= _tol)
+          max_coor2_nodes.push_back(nodes[i]);
+      }
+      if (max_coor2_nodes.size() > 1)
+        mooseError("Multiple nodes with same x,y,z coordinates within tolerance");
+      else
+        return max_coor2_nodes[0]->id();
+    }
+    else
+      return max_coor1_nodes[0]->id();
+  }
+  else
+    return max_coor0_nodes[0]->id();
 }
 
 void
