@@ -20,6 +20,8 @@
 #include "ElasticModel.h"
 #include "ElasticEnergyAux.h"
 #include "ElementsOnLineAux.h"
+#include "ElementsIntersectedByPlane.h"
+#include "Gravity.h"
 #include "HomogenizationKernel.h"
 #include "HomogenizedElasticConstants.h"
 #include "IsotropicPlasticity.h"
@@ -55,6 +57,9 @@
 #include "InteractionIntegralBenchmarkBC.h"
 #include "MaterialTensorIntegral.h"
 #include "CrackDataSampler.h"
+#include "WeibullStress.h"
+#include "WeibullStressFromSIFs.h"
+#include "WeibullStressAtCrackFrontEdge.h"
 #include "SolidMechanicsAction.h"
 #include "DomainIntegralAction.h"
 #include "SolidMechImplicitEuler.h"
@@ -113,6 +118,7 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerAux(DomainIntegralQFunction);
   registerAux(DomainIntegralTopologicalQFunction);
   registerAux(ElementsOnLineAux);
+  registerAux(ElementsIntersectedByPlane);
 
   registerBoundaryCondition(DashpotBC);
   registerBoundaryCondition(PresetVelocity);
@@ -154,6 +160,9 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerPostprocessor(CavityPressurePostprocessor);
   registerPostprocessor(MaterialTensorIntegral);
   registerPostprocessor(MixedModeEquivalentK);
+  registerPostprocessor(WeibullStress);
+  registerPostprocessor(WeibullStressFromSIFs);
+  registerPostprocessor(WeibullStressAtCrackFrontEdge);
 
   registerVectorPostprocessor(CrackDataSampler);
   registerVectorPostprocessor(LineMaterialSymmTensorSampler);
@@ -181,6 +190,7 @@ SolidMechanicsApp::associateSyntax(Syntax & syntax, ActionFactory & action_facto
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_postprocessor");
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_vector_postprocessor");
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_material");
+  syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_postprocessor_later");
 
   registerAction(CavityPressureAction, "add_bc");
   registerAction(CavityPressurePPAction, "add_postprocessor");
@@ -191,4 +201,8 @@ SolidMechanicsApp::associateSyntax(Syntax & syntax, ActionFactory & action_facto
   registerAction(DomainIntegralAction, "add_aux_kernel");
   registerAction(DomainIntegralAction, "add_postprocessor");
   registerAction(DomainIntegralAction, "add_material");
+
+  registerTask("add_postprocessor_later", false);
+  registerAction(DomainIntegralAction, "add_postprocessor_later");
+  syntax.addDependency("add_postprocessor_later","add_postprocessor");
 }

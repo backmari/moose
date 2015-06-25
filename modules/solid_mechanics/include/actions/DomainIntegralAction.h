@@ -40,6 +40,12 @@ protected:
     TOPOLOGY
   };
 
+  enum WEIBULL_MESH_TYPE
+  {
+    RANDOM,
+    REGULAR
+  };
+
   unsigned int calcNumCrackFrontPoints();
 
   std::set<INTEGRAL> _integrals;
@@ -76,6 +82,18 @@ protected:
   MooseEnum _position_type;
   MooseEnum _q_function_type;
   bool _get_equivalent_k;
+  bool _get_weibull_stress;
+  bool _get_weibull_stress_sif;
+  Real _weibull_modulus;
+  Real _weibull_lambda;
+  MooseEnum _weibull_mesh_type;
+  Real _weibull_rho;
+  Real _yield_stress;
+  bool _get_weibull_at_crack_edges;
+  Real _weibull_m;
+  Real _weibull_lambda;
+  Real _yield_stress;
+  Real _r_max;
   bool _use_displaced_mesh;
   std::vector<unsigned int> _ring_vec;
 };
