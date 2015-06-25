@@ -1,0 +1,68 @@
+reset
+
+#{length = 20}
+#{fine_size = 0.005}
+#{coarse_size = 2}
+#{crack_length = 0.05*length}
+#{offset_length = 0.5*length-crack_length}
+#{crack_tip_radius = 0.001*length}
+
+create surface rectangle width {length} height {length}
+webcut volume 1 with xplane offset {-offset_length}
+
+create surface circle radius {crack_tip_radius}
+body 3 move {-offset_length} {-length/2} 0
+subtract body 3 from body 1
+
+create surface rectangle width {crack_length} height {crack_tip_radius}
+move vertex 14 location vertex 3
+subtract body 4 from body 2
+
+create surface circle radius {10*crack_tip_radius}
+body 5 move {-offset_length} {-length/2} 0
+webcut volume 1 2 with tool body 5
+delete body 5
+
+imprint all
+merge volume all
+
+# mesh surface, then sweep
+curve 12 interval 8
+surface 10 scheme map
+mesh surface 10
+mesh surface 12
+
+curve 21 scheme bias fine size {2*crack_tip_radius} coarse size {crack_length/2} start vertex 16
+curve 25 scheme bias fine size {2*crack_tip_radius} coarse size {crack_length/2} start vertex 19
+curve 31 interval size {2*crack_tip_radius}
+mesh surface 11
+
+curve 4 7 interval size {crack_length}
+curve 24 scheme bias fine size {2*crack_tip_radius} coarse size {crack_length} start vertex 20
+mesh surface 9
+
+sweep surface all perpendicular distance 1 switchside
+
+imprint all
+merge body all
+
+volume 1 scheme sweep source surface 9 target surface 18 autosmooth_target off
+volume 2 scheme sweep source surface 11 target surface 29 autosmooth_target off
+volume 6 scheme sweep source surface 10 target surface 23 autosmooth_target off
+volume 7 scheme sweep source surface 12 target surface 33 autosmooth_target off
+curve 36 37 49 59 65 interval 3
+mesh volume 1 2 6 7
+
+sideset 1 surface 9 10 11 12
+sideset 2 surface 14
+sideset 3 surface 18 23 29 33
+sideset 4 surface 26
+sideset 5 surface 13 21
+sideset 6 surface 15 25
+
+nodeset 1001 curve 49
+
+block 1 volume all
+block all element type HEX8
+
+export mesh "center_crack3d_blunt.e" overwrite

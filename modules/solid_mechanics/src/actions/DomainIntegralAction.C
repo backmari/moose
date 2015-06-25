@@ -47,6 +47,19 @@ InputParameters validParams<DomainIntegralAction>()
   params.addParam<MooseEnum>("q_function_type",q_function_type,"The method used to define the integration domain. Options are: "+q_function_type.getRawNames());
   params.addParam<bool>("equivalent_k",false,"Calculate an equivalent K from KI, KII and KIII, assuming self-similar crack growth.");
   //params.addParam<std::string>("xfem_qrule", "volfrac", "XFEM quadrature rule to use");
+  params.addParam<bool>("weibull_stress",false,"Calculate Weibull stress along crack front.");
+  params.addParam<bool>("weibull_stress_sif",false,"Calculate Weibull stress along crack front from stresses based on stress intensity factors.");
+  params.addParam<Real>("m", "Weibull modulus");
+  params.addParam<Real>("lambda", 2.0, "Stress cut-off scaling factor");
+  params.addParam<Real>("yield_stress","Yield stress of the material");
+  MooseEnum weibull_mesh_type("Random Regular","Random");
+  params.addParam<MooseEnum>("weibull_stress_mesh_type",weibull_mesh_type,"The method used to generate the mesh points used to calculate the Weibull stress, options are: "+weibull_mesh_type.getRawNames());
+  params.addParam<Real>("crack_tip_radius","Radius of the blunt crack tip");
+  params.addParam<bool>("weibull_at_crack_edges",false,"Calculate Weibull stress density at crack front edges");
+  params.addParam<Real>("m","Weibull modulus");
+  params.addParam<Real>("lambda","Weibull stress cut-off scaling factor");
+  params.addParam<Real>("yield_stress","Yield stress of the material");
+  params.addParam<Real>("r_max","Max radius for Weibull stress calculation");
   return params;
 }
 
@@ -68,6 +81,10 @@ DomainIntegralAction::DomainIntegralAction(const InputParameters & params):
   _position_type(getParam<MooseEnum>("position_type")),
   _q_function_type(getParam<MooseEnum>("q_function_type")),
   _get_equivalent_k(getParam<bool>("equivalent_k")),
+  _get_weibull_stress(getParam<bool>("weibull_stress")),
+  _get_weibull_stress_sif(getParam<bool>("weibull_stress_sif")),
+  _weibull_mesh_type(getParam<MooseEnum>("weibull_stress_mesh_type")),
+  _get_weibull_at_crack_edges(getParam<bool>("weibull_at_crack_edges")),
   _use_displaced_mesh(false)
 {
   if (_q_function_type == GEOMETRY)
@@ -177,6 +194,36 @@ DomainIntegralAction::DomainIntegralAction(const InputParameters & params):
       _youngs_modulus = getParam<Real>("youngs_modulus");
     if (!poissons_ratio_set)
       _poissons_ratio = getParam<Real>("poissons_ratio");
+  }
+
+  if (_get_weibull_stress || _get_weibull_stress_sif)
+  {
+    _weibull_modulus = getParam<Real>("m");
+    _weibull_lambda = getParam<Real>("lambda");
+    _yield_stress = getParam<Real>("yield_stress");
+  }
+
+  if (_get_weibull_stress && _q_function_type == GEOMETRY)
+      mooseError("DomainIntegral error: must use topology-based q-function for Weibull stress calculation.");
+
+  if (_get_weibull_stress_sif)
+  {
+    if (_integrals.count(INTERACTION_INTEGRAL_KI) == 0 || _integrals.count(INTERACTION_INTEGRAL_KII) == 0 || _integrals.count(INTERACTION_INTEGRAL_KIII) == 0)
+      mooseError("DomainIntegral error: must calculate KI, KII and KIII to get Weibull stress from stress intensity factors.");
+    _weibull_rho = getParam<Real>("crack_tip_radius");
+  }
+
+  if (_get_weibull_at_crack_edges)
+  {
+    if (isParamValid("m") && isParamValid("lambda") && isParamValid("yield_stress") && isParamValid("r_max"))
+    {
+      _weibull_m = getParam<Real>("m");
+      _weibull_lambda = getParam<Real>("lambda");
+      _yield_stress = getParam<Real>("yield_stress");
+      _r_max = getParam<Real>("r_max");
+    }
+    else
+      mooseError("DomainIntegral error: must set Weibull modulus m, cut-off lambda, yield stress, and r_max for Weibull stress calculation.");
   }
 }
 
@@ -544,6 +591,116 @@ DomainIntegralAction::act()
         }
       }
     }
+    if (_get_weibull_stress)
+    {
+      std::string pp_base_name("WS");
+      const std::string pp_type_name("WeibullStress");
+      InputParameters params = _factory.getValidParams(pp_type_name);
+      params.set<UserObjectName>("crack_front_definition") = uo_name;
+      params.set<MultiMooseEnum>("execute_on") = "timestep_end";
+      params.set<Real>("m") = _weibull_modulus;
+      params.set<Real>("lambda") = _weibull_lambda;
+      params.set<Real>("yield_stress") = _yield_stress;
+      if (_has_symmetry_plane)
+        params.set<unsigned int>("symmetry_plane") = _symmetry_plane;
+      if (_treat_as_2d)
+      {
+        std::ostringstream av_name_stream;
+        av_name_stream<<av_base_name<<"_"<<_ring_vec.back();
+        std::vector<VariableName> qvars;
+        qvars.push_back(av_name_stream.str());
+        params.set<std::vector<VariableName> >("q") = qvars;
+        std::ostringstream pp_name_stream;
+        pp_name_stream<<pp_base_name;
+        _problem->addPostprocessor(pp_type_name,pp_name_stream.str(),params);
+      }
+      else
+      {
+        for (unsigned int cfp_index=0; cfp_index<num_crack_front_points; ++cfp_index)
+        {
+          std::ostringstream av_name_stream;
+          av_name_stream<<av_base_name<<"_"<<cfp_index+1<<"_"<<_ring_vec.back();
+          std::vector<VariableName> qvars;
+          qvars.push_back(av_name_stream.str());
+          params.set<std::vector<VariableName> >("q") = qvars;
+          std::ostringstream pp_name_stream;
+          pp_name_stream<<pp_base_name<<"_"<<cfp_index+1;
+          params.set<unsigned int>("crack_front_point_index") = cfp_index;
+          _problem->addPostprocessor(pp_type_name,pp_name_stream.str(),params);
+        }
+      }      
+    }
+    if (_get_weibull_stress_sif)
+    {
+      std::string pp_base_name("WSS");
+      const std::string pp_type_name("WeibullStressFromSIFs");
+      InputParameters params = _factory.getValidParams(pp_type_name);
+      params.set<UserObjectName>("crack_front_definition") = uo_name;
+      params.set<MultiMooseEnum>("execute_on") = "timestep_end";
+      params.set<Real>("poissons_ratio") = _poissons_ratio;
+      params.set<Real>("m") = _weibull_modulus;
+      params.set<Real>("lambda") = _weibull_lambda;
+      params.set<Real>("yield_stress") = _yield_stress;
+      params.set<MooseEnum>("weibull_stress_mesh_type") = _weibull_mesh_type;
+      params.set<Real>("crack_tip_radius") = _weibull_rho;
+      if (_has_symmetry_plane)
+        params.set<unsigned int>("symmetry_plane") = _symmetry_plane;
+      if (_treat_as_2d)
+      {
+        std::ostringstream ki_name_stream;
+        ki_name_stream<<"II_KI_"<<_ring_vec.back();
+        std::ostringstream kii_name_stream;
+        kii_name_stream<<"II_KII_"<<_ring_vec.back();
+        std::ostringstream kiii_name_stream;
+        kiii_name_stream<<"II_KIII_"<<_ring_vec.back();
+        params.set<PostprocessorName>("KI_name") = ki_name_stream.str();
+        params.set<PostprocessorName>("KII_name") = kii_name_stream.str();
+        params.set<PostprocessorName>("KIII_name") = kiii_name_stream.str();
+        Moose::out<<" SFI names "<<ki_name_stream.str()<<" "<<kii_name_stream.str()<<std::endl;
+        std::ostringstream pp_name_stream;
+        pp_name_stream<<pp_base_name;
+        _problem->addPostprocessor(pp_type_name,pp_name_stream.str(),params);
+      }
+      else
+      {
+        for (unsigned int cfp_index=0; cfp_index<num_crack_front_points; ++cfp_index)
+        {
+          std::ostringstream ki_name_stream;
+          ki_name_stream<<"II_KI_"<<cfp_index+1<<"_"<<_ring_vec.back();
+          std::ostringstream kii_name_stream;
+          kii_name_stream<<"II_KII_"<<cfp_index+1<<"_"<<_ring_vec.back();
+          std::ostringstream kiii_name_stream;
+          kiii_name_stream<<"II_KIII_"<<cfp_index+1<<"_"<<_ring_vec.back();
+          params.set<PostprocessorName>("KI_name") = ki_name_stream.str();
+          params.set<PostprocessorName>("KII_name") = kii_name_stream.str();
+          params.set<PostprocessorName>("KIII_name") = kiii_name_stream.str();
+          std::ostringstream pp_name_stream;
+          pp_name_stream<<pp_base_name<<"_"<<cfp_index+1;
+          params.set<unsigned int>("crack_front_point_index") = cfp_index;
+          _problem->addPostprocessor(pp_type_name,pp_name_stream.str(),params);
+        }
+      }
+    if (_get_weibull_at_crack_edges)
+    {
+      std::string pp_base_name("WS_edge");
+      const std::string pp_type_name("WeibullStressAtCrackFrontEdge");
+      InputParameters params = _factory.getValidParams(pp_type_name);
+      params.set<UserObjectName>("crack_front_definition") = uo_name;
+      params.set<Real>("m") = _weibull_m;
+      params.set<Real>("lambda") = _weibull_lambda;
+      params.set<Real>("yield_stress") = _yield_stress;
+      params.set<Real>("r_max") = _r_max;
+      params.set<MultiMooseEnum>("execute_on") = "timestep_end";
+
+      // Loop over first n-1 crack front points to access all crack front edges
+      for (unsigned int cfp_index=0; cfp_index<num_crack_front_points-1; ++cfp_index)
+      {
+        std::ostringstream pp_name_stream;
+        pp_name_stream<<pp_base_name<<"_"<<cfp_index+1;
+        params.set<unsigned int>("crack_front_point_index") = cfp_index;
+        _problem->addPostprocessor(pp_type_name,pp_name_stream.str(),params);
+      }
+    }
   }
   else if (_current_task == "add_vector_postprocessor")
   {
@@ -713,6 +870,9 @@ DomainIntegralAction::act()
         }
       }
     }
+  }
+  else if (_current_task == "add_postprocessor_later")
+  {
   }
 }
 

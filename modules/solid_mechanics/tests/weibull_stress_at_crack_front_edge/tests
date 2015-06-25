@@ -1,0 +1,7 @@
+[Tests]
+  [./test]
+    type = 'Exodiff'
+    input = 'weibull_stress_at_crack_front_edge.i'
+    exodiff = 'weibull_stress_at_crack_front_edge_out.e'
+  [../]
+[]

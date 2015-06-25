@@ -1,0 +1,7 @@
+[Tests]
+  [./test]
+    type = 'Exodiff'
+    input = 'elements_intersected_by_plane.i'
+    exodiff = 'elements_intersected_by_plane_out.e'
+  [../]
+[]
