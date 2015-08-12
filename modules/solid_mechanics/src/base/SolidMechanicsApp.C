@@ -65,6 +65,7 @@
 #include "MaterialTensorIntegral.h"
 #include "CrackDataSampler.h"
 #include "WeibullStress.h"
+#include "OldWeibullStress.h"
 #include "SolidMechanicsAction.h"
 #include "DomainIntegralAction.h"
 #include "SolidMechInertialForce.h"
@@ -180,6 +181,7 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerPostprocessor(MaterialTensorIntegral);
   registerPostprocessor(MixedModeEquivalentK);
   registerPostprocessor(WeibullStress);
+  registerPostprocessor(OldWeibullStress);
 
   registerVectorPostprocessor(CrackDataSampler);
   registerVectorPostprocessor(LineMaterialSymmTensorSampler);

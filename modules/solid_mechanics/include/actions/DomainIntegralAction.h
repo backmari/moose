@@ -76,6 +76,10 @@ protected:
   MooseEnum _position_type;
   MooseEnum _q_function_type;
   bool _get_equivalent_k;
+  bool _get_weibull_stress;
+  Real _weibull_modulus;
+  Real _weibull_lambda;
+  Real _yield_stress;
   bool _use_displaced_mesh;
   std::vector<unsigned int> _ring_vec;
 };

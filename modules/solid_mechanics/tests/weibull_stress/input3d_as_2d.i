@@ -3,11 +3,12 @@
   family = LAGRANGE
   disp_x = disp_x
   disp_y = disp_y
+  disp_z = disp_z
 []
 
 [Mesh]
-  file = center_crack2d.e
-  displacements = 'disp_x disp_y'
+  file = center_crack3d.e
+  displacements = 'disp_x disp_y disp_z'
   partitioner = centroid
   centroid_partitioner_direction = z
 []
@@ -17,6 +18,8 @@
   [./disp_x]
   [../]
   [./disp_y]
+  [../]
+  [./disp_z]
   [../]
 []
 
@@ -65,9 +68,9 @@
   block = 1
   youngs_modulus = 30e+6
   poissons_ratio = 0.3
+#  symmetry_plane = 1
   2d = true
   axis_2d = 2
-  symmetry_plane = 1
   q_function_type = Topology
   weibull_stress = true
   ring_first = 5
@@ -128,23 +131,37 @@
 
 [BCs]
 
+  [./no_z1]
+    type = DirichletBC
+    variable = disp_z
+    boundary = 1
+    value = 0.0
+  [../]
+
+  [./no_z2]
+    type = DirichletBC
+    variable = disp_z
+    boundary = 3
+    value = 0.0
+  [../]
+
   [./no_x]
     type = DirichletBC
     variable = disp_x
-    boundary = 300
+    boundary = 4
     value = 0.0
   [../]
 
   [./no_y]
     type = DirichletBC
     variable = disp_y
-    boundary = 100
+    boundary = 5
     value = 0.0
   [../]
 
   [./Pressure]
     [./top]
-      boundary = 200
+      boundary = 6
       function = rampConstantUp
     [../]
   [../]
@@ -157,6 +174,7 @@
 
     disp_x = disp_x
     disp_y = disp_y
+    disp_z = disp_z
 
     youngs_modulus = 30e+6
     poissons_ratio = 0.3
@@ -211,7 +229,7 @@
 
 
 [Outputs]
-  file_base = center_crack2d_out
+  file_base = center_crack3d_as_2d_out
   output_initial = true
   exodus = true
   [./console]
