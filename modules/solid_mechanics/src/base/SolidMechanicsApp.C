@@ -65,6 +65,7 @@
 #include "MaterialTensorIntegral.h"
 #include "CrackDataSampler.h"
 #include "WeibullStress.h"
+#include "WeibullStressFromSFIs.h"
 #include "OldWeibullStress.h"
 #include "SolidMechanicsAction.h"
 #include "DomainIntegralAction.h"
@@ -181,6 +182,7 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerPostprocessor(MaterialTensorIntegral);
   registerPostprocessor(MixedModeEquivalentK);
   registerPostprocessor(WeibullStress);
+  registerPostprocessor(WeibullStressFromSFIs);
   registerPostprocessor(OldWeibullStress);
 
   registerVectorPostprocessor(CrackDataSampler);
@@ -215,6 +217,7 @@ SolidMechanicsApp::associateSyntax(Syntax & syntax, ActionFactory & action_facto
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_postprocessor");
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_vector_postprocessor");
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_material");
+  syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_postprocessor_later");
 
   registerAction(PressureAction, "add_bc");
   registerAction(DisplacementAboutAxisAction, "add_bc");
@@ -227,4 +230,8 @@ SolidMechanicsApp::associateSyntax(Syntax & syntax, ActionFactory & action_facto
   registerAction(DomainIntegralAction, "add_aux_kernel");
   registerAction(DomainIntegralAction, "add_postprocessor");
   registerAction(DomainIntegralAction, "add_material");
+
+  registerTask("add_postprocessor_later", false);
+  registerAction(DomainIntegralAction, "add_postprocessor_later");
+  syntax.addDependency("add_postprocessor_later","add_postprocessor");
 }

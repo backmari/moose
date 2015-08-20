@@ -77,6 +77,7 @@ protected:
   MooseEnum _q_function_type;
   bool _get_equivalent_k;
   bool _get_weibull_stress;
+  bool _get_weibull_stress_sfi;
   Real _weibull_modulus;
   Real _weibull_lambda;
   Real _yield_stress;

@@ -30,16 +30,17 @@ volume 2 scheme sweep source surface 3 target surface 13 autosmooth_target off
 curve 12 13 23 interval 2
 mesh volume 1 2
 
-#sideset 1 surface 2 3
-#sideset 2 surface 5
-#sideset 3 surface 8 13
-#sideset 4 surface 10
-#sideset 5 surface 4
-#sideset 6 surface 6 9
+sideset 1 surface 2 3
+sideset 2 surface 5
+sideset 3 surface 8 13
+sideset 4 surface 10
+sideset 5 surface 4
+sideset 6 surface 6 9
 
-#nodeset 1001 curve 13
+nodeset 1001 curve 13
 
-#block 1 volume all
-#block all element type HEX8
+block 1 volume all
+block all element type HEX8
 
-#export mesh "center_crack3d.e" overwrite
+export mesh "center_crack3d.e" overwrite
+

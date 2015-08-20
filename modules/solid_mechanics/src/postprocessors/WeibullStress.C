@@ -4,7 +4,7 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-//  This post processor calculates the J-Integral
+//  This post processor calculates the Weibull stress
 //
 #include "WeibullStress.h"
 
@@ -58,7 +58,7 @@ WeibullStress::computeQpIntegral()
   if (principal_stress > _cutoff && _scalar_q[_qp] > 0.0)
   {
     value = std::pow(principal_stress,_m);
-    Moose::out<<"node "<<_crack_front_point_index<<" element "<<_current_elem->id()<<" "<<_qp<<" stress "<<principal_stress<<std::endl;
+//    Moose::out<<"node "<<_crack_front_point_index<<" element "<<_current_elem->id()<<" "<<_qp<<" stress "<<principal_stress<<std::endl;
   }
 
   return value;
