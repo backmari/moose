@@ -4,34 +4,43 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-#ifndef WEIBULLSTRESSFROMSFIS_H
-#define WEIBULLSTRESSFROMSFIS_H
+#ifndef WEIBULLSTRESSFROMSIFS_H
+#define WEIBULLSTRESSFROMSIFS_H
 
-#include "ElementIntegralPostprocessor.h"
+#include "GeneralPostprocessor.h"
 #include "CrackFrontDefinition.h"
 
 //Forward Declarations
-class WeibullStressFromSFIs;
+class WeibullStressFromSIFs;
 
 template<>
-InputParameters validParams<WeibullStressFromSFIs>();
+InputParameters validParams<WeibullStressFromSIFs>();
 
 /**
  * This postprocessor computes the Weibull stress
  *
  */
-class WeibullStressFromSFIs:
-  public ElementIntegralPostprocessor
+class WeibullStressFromSIFs:
+  public GeneralPostprocessor
 {
 public:
-  WeibullStressFromSFIs(const InputParameters & parameters);
+  WeibullStressFromSIFs(const InputParameters & parameters);
+
+  virtual void initialize();
+  virtual void execute();
   virtual Real getValue();
 
 protected:
-  virtual void initialSetup();
-  virtual Real computeQpIntegral();
-  Real computePrincipalStress(PostprocessorValue ki, PostprocessorValue kii, PostprocessorValue kiii);
-  VariableValue & _scalar_q;
+  enum MESH_TYPE
+  {
+    RANDOM,
+    REGULAR
+  };
+
+  Real computeWeibullStress(PostprocessorValue ki, PostprocessorValue kii, PostprocessorValue kiii);
+  void generateRegularMesh();
+  void generateRandomMesh();
+  void generateRThetaMesh();
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;
@@ -44,8 +53,11 @@ protected:
   Real _yield_stress;
   bool _has_symmetry_plane;
   Real _cutoff;
-  Real _r;
-  Real _theta;
+  MooseEnum _mesh_type;
+  Real _rho;
+  Real _mesh_area_radius;
+  std::vector<Real> _r;
+  std::vector<Real> _theta;
 };
 
-#endif //WEIBULLSTRESSFROMSFIS_H
+#endif //WEIBULLSTRESSFROMSIFS_H
