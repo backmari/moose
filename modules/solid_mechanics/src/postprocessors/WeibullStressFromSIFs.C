@@ -46,9 +46,10 @@ WeibullStressFromSIFs::WeibullStressFromSIFs(const InputParameters & parameters)
     _mesh_type(getParam<MooseEnum>("weibull_stress_mesh_type"))
 {
   if (isParamValid("crack_tip_radius"))
-    _rho = getParam<Real>("crack_tip_radius");
+    _rho = 2 * getParam<Real>("crack_tip_radius");
 
-  _mesh_area_radius = 100.0 * _rho;
+  _mesh_area_radius = 50.0 * _rho;
+  Moose::out<<"mesh area radius "<<_mesh_area_radius<<std::endl;
   _cutoff = _lambda * _yield_stress;
 }
 
@@ -106,17 +107,29 @@ WeibullStressFromSIFs::computeWeibullStress(const PostprocessorValue _ki, const 
     stress(0,0) = ki2PiR * ct2 * (1 - st2 * stt2) - ki2PiR * rho2R * ctt2 - kii2PiR * st2 * (2 + ct2 * ctt2) + kii2PiR * rho2R * stt2;
     stress(1,1) = ki2PiR * ct2 * (1 + st2 * stt2) + ki2PiR * rho2R * ctt2 + kii2PiR * st2 * ct2 * ctt2 - kii2PiR * rho2R * stt2;
     stress(0,1) = ki2PiR * st2 * ct2 * ctt2 - ki2PiR * rho2R * stt2 + kii2PiR * ct2 * (1 - st2 * stt2) - kii2PiR * rho2R * ct2;
+    stress(1,0) = stress(0,1);
     stress(0,2) = -kiii2PiR * st2;
+    stress(2,0) = stress(0,2);
     stress(1,2) = kiii2PiR * ct2;
+    stress(2,1) = stress(1,2);
     stress(2,2) = _poissons_ratio * (2 * ki2PiR * ct2 - 2 * kii2PiR * st2);
 
+//    Moose::out<<"ki2PiR "<<ki2PiR<<" kii2PiR "<<kii2PiR<<" kiii2PiR "<<kiii2PiR<<std::endl;
     ColumnMajorMatrix eval(3,1);
     ColumnMajorMatrix evec(3,3);
     stress.eigen(eval,evec);
 
-    Real principal_stress = eval(0);
+    Real principal_stress = eval(2);
+//    Moose::out<<"r "<<_r[i]<<" theta "<<_theta[j]<<std::endl;
+//    stress.print();
+//    Moose::out<<std::endl;
+//    Moose::out<<"Stress "<<stress(0,0)<<std::endl;
     if (principal_stress > _cutoff)
+    {
       weibull_stress += std::pow(principal_stress,_m);
+      Moose::out<<"Principal stress "<<eval(2)<<" r "<<_r[i]<<" theta "<<_theta[j]<<" "<<_ki<<" "<<_kii<<" "<<_kiii<<std::endl;
+      stress.print();
+    }
   }
   
   return weibull_stress;
@@ -140,11 +153,14 @@ WeibullStressFromSIFs::generateRegularMesh()
 
   for (int i=0; i<imax; ++i)
   {
-    _r.push_back(_rho + sqrt((double) i/ (double) imax) *(_mesh_area_radius-_rho));
     for (int j=0; j<jmax; ++j)
     {
+      Real r = _rho + sqrt((double) i/ (double) imax) *(_mesh_area_radius-_rho);
+      _r.push_back(_rho + sqrt((double) i/ (double) imax) *(_mesh_area_radius-_rho));
+      Real theta = 2*pi* (double) j / (double) jmax;
       _theta.push_back(2*pi* (double) j / (double) jmax);
-//      double x = r * cos(theta);
+//      Moose::out<<"r "<<r<<" theta "<<theta<<std::endl;
+      //      double x = r * cos(theta);
 //      double y = r * sin(theta);
 //      std::cout<<x<<" "<<y<<std::endl;
 //      std::cout<<r<<" "<<theta*180.0/pi<<" "<<i<<" "<<(double) j / (double) jmax<<std::endl;
@@ -158,7 +174,7 @@ WeibullStressFromSIFs::generateRandomMesh()
 {
   srand(time(NULL));
 
-  for (int i=0; i<=1000; ++i)
+  for (int i=0; i<=100000; ++i)
   {
     double u = ((double) rand() / ((double) RAND_MAX + 1.0));
     double v = ((double) rand() / ((double) RAND_MAX + 1.0));

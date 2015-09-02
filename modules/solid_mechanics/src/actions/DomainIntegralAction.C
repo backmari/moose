@@ -185,13 +185,13 @@ DomainIntegralAction::DomainIntegralAction(const InputParameters & params):
 
   if (_get_weibull_stress || _get_weibull_stress_sif)
   {
-    if (_q_function_type == GEOMETRY)
-      mooseError("DomainIntegral error: must use topology-based q-function for Weibull stress calculation.");
-    
     _weibull_modulus = getParam<Real>("m");
     _weibull_lambda = getParam<Real>("lambda");
     _yield_stress = getParam<Real>("yield_stress");
   }
+
+  if (_get_weibull_stress && _q_function_type == GEOMETRY)
+      mooseError("DomainIntegral error: must use topology-based q-function for Weibull stress calculation.");
 
   if (_get_weibull_stress_sif)
   {

@@ -61,7 +61,7 @@
 []
 
 [DomainIntegral]
-  integrals = 'JIntegral'
+  integrals = 'JIntegral InteractionIntegralKI InteractionIntegralKII InteractionIntegralKIII'
   boundary = 1001
   crack_direction_method = CrackDirectionVector
   crack_direction_vector = '1 0 0'
@@ -71,7 +71,10 @@
 #  symmetry_plane = 1
   q_function_type = Topology
   weibull_stress = true
-  ring_first = 5
+  weibull_stress_sif = true
+  weibull_stress_mesh_type = Regular
+  crack_tip_radius = 0.05
+  ring_first = 16
   ring_last = 20
   m = 15.0
   lambda = 2.0
