@@ -4,64 +4,58 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-#ifndef WEIBULLSTRESSFROMSIFS_H
-#define WEIBULLSTRESSFROMSIFS_H
+#ifndef WEIBULLSTRESSATTEST_H
+#define WEIBULLSTRESSATTEST_H
 
-#include "GeneralPostprocessor.h"
+#include "ElementIntegralPostprocessor.h"
+#include "MaterialTensorCalculator.h"
 #include "CrackFrontDefinition.h"
-#include "RandomInterface.h"
 
-//Forward Declarations
-class WeibullStressFromSIFs;
+class WeibullStressOnFEMesh;
+class SymmTensor;
 
 template<>
-InputParameters validParams<WeibullStressFromSIFs>();
+InputParameters validParams<WeibullStressOnFEMesh>();
 
-/**
- * This postprocessor computes the Weibull stress
- *
- */
-class WeibullStressFromSIFs:
-  public GeneralPostprocessor,
-  public RandomInterface
+class WeibullStressOnFEMesh :
+  public ElementIntegralPostprocessor,
+  public MaterialTensorCalculator
 {
 public:
-  WeibullStressFromSIFs(const InputParameters & parameters);
+  WeibullStressOnFEMesh(const InputParameters & parameters);
 
-  virtual void initialize();
+  virtual void initialSetup();
   virtual void execute();
+//  virtual void threadJoin(const UserObject & u );
   virtual Real getValue();
 
 protected:
-  enum MESH_TYPE
-  {
-    RANDOM,
-    REGULAR
-  };
 
-  Real computeWeibullStress(PostprocessorValue ki, PostprocessorValue kii, PostprocessorValue kiii);
+  virtual Real computeQpIntegral();
   Real computePrincipalStress(Real r, Real theta);
-  void generateRegularMesh();
-  void generateRandomMesh();
+
+  std::map<std::pair<unsigned int,unsigned int>,Real> _dist;
+  std::map<std::pair<unsigned int,unsigned int>,Real> _value;
+
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;
   const PostprocessorValue & _ki_value;
   const PostprocessorValue & _kii_value;
   const PostprocessorValue & _kiii_value;
-  MooseEnum _crack_tip_shape;
+  const MaterialProperty<SymmTensor> & _stress_tensor;
   Real _poissons_ratio;
   Real _m;
   Real _lambda;
   Real _yield_stress;
   Real _r_max;
+  bool _has_symmetry_plane;
   Real _cutoff;
   Real _rho;
-  std::vector<Real> _r;
-  std::vector<Real> _theta;
-  unsigned int _npoints;
-  Real _dr;
-  Real _dtheta;
+
+private:
+  std::vector<Elem *> _intersected_elems;
+  bool _treat_as_2d;
 };
 
-#endif //WEIBULLSTRESSFROMSIFS_H
+#endif

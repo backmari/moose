@@ -4,8 +4,8 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-#ifndef WEIBULLSTRESSATCRACKFRONTNODE_H
-#define WEIBULLSTRESSATCRACKFRONTNODE_H
+#ifndef WEIBULLSTRESSATCRACKFRONTEDGE_H
+#define WEIBULLSTRESSATCRACKFRONTEDGE_H
 
 #include "ElementIntegralPostprocessor.h"
 #include "MaterialTensorCalculator.h"
@@ -22,9 +22,9 @@ class WeibullStressAtCrackFrontEdge :
   public MaterialTensorCalculator
 {
 public:
-  WeibullStressAtCrackFrontEdge(const std::string & name, InputParameters parameters);
+  WeibullStressAtCrackFrontEdge(const InputParameters & parameters);
 
-  virtual void initialize();
+  virtual void initialSetup();
   virtual void execute();
 //  virtual void threadJoin(const UserObject & u );
   virtual Real getValue();
@@ -49,6 +49,7 @@ protected:
 
 private:
   std::vector<Elem *> _intersected_elems;
+  bool _treat_as_2d;
 };
 
 #endif

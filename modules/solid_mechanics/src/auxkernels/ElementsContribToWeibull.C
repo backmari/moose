@@ -4,14 +4,15 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-//  This post processor calculates the J-Integral
-//
-#include "WeibullStress.h"
+#include "ElementsContribToWeibull.h"
+#include "PlaneTracing.h"
+#include "MooseMesh.h"
+#include <algorithm>
 
 template<>
-InputParameters validParams<WeibullStress>()
+InputParameters validParams<ElementsContribToWeibull>()
 {
-  InputParameters params = validParams<ElementIntegralPostprocessor>();
+  InputParameters params = validParams<AuxKernel>();
   params += validParams<MaterialTensorCalculator>();
 
   params.addRequiredParam<UserObjectName>("crack_front_definition", "The CrackFrontDefinition user object name");
@@ -21,13 +22,14 @@ InputParameters validParams<WeibullStress>()
   params.addParam<Real>("weibull_r_max","Max radius for Weibull stress calculation");
   params.addRequiredParam<Real>("yield_stress","Yield stress of the material");
   params.set<MooseEnum>("quantity") = "MaxPrincipal";
-  params.addParam<unsigned int>("symmetry_plane", "Account for a symmetry plane passing through the plane of the crack, normal to the specified axis (0=x, 1=y, 2=z)");
-  params.set<bool>("use_displaced_mesh") = false;
+  
+  params.set<MultiMooseEnum>("execute_on") = "timestep_end";
+
   return params;
 }
 
-WeibullStress::WeibullStress(const InputParameters & parameters):
-    ElementIntegralPostprocessor(parameters),
+ElementsContribToWeibull::ElementsContribToWeibull(const InputParameters & parameters):
+    AuxKernel(parameters),
     MaterialTensorCalculator(parameters),
     _crack_front_definition(&getUserObject<CrackFrontDefinition>("crack_front_definition")),
     _has_crack_front_point_index(isParamValid("crack_front_point_index")),
@@ -36,29 +38,23 @@ WeibullStress::WeibullStress(const InputParameters & parameters):
     _m(getParam<Real>("m")),
     _lambda(getParam<Real>("lambda")),
     _yield_stress(getParam<Real>("yield_stress")),
-    _r_max(getParam<Real>("weibull_r_max")),
-    _has_symmetry_plane(isParamValid("symmetry_plane"))
+    _r_max(getParam<Real>("weibull_r_max"))
 {
   _cutoff = _lambda * _yield_stress;
 }
 
 void
-WeibullStress::initialSetup()
+ElementsContribToWeibull::initialSetup()
 {
   _treat_as_2d = _crack_front_definition->treatAs2D();
+  _crack_front_length = 1.0;
+  if (!_treat_as_2d)
+    _crack_front_length = _crack_front_definition->getCrackFrontLength(); 
 }
 
 Real
-WeibullStress::computeQpIntegral()
+ElementsContribToWeibull::computeValue()
 {
-  // const SymmTensor & tensor(_stress_tensor[_qp]);
-  // RealVectorValue direction;
-
-  // Real principal_stress = getTensorQuantity(tensor, &_q_point[_qp], direction);
-  // Real value = 0;
-  // if (principal_stress > _cutoff && principal_stress < 3*_yield_stress)
-  //   value = std::pow(principal_stress,_m);
-
   Real value = 0;
   Real r;
   Real theta;
@@ -72,18 +68,6 @@ WeibullStress::computeQpIntegral()
     if (principal_stress > _cutoff && principal_stress < 3*_yield_stress)
       value = std::pow(principal_stress,_m);
   }
-  
-  return value;
-}
 
-Real
-WeibullStress::getValue()
-{
-  gatherSum(_integral_value);
-
-  Real crack_front_length = 1.0;
-  if (!_treat_as_2d)
-    crack_front_length = _crack_front_definition->getCrackFrontLength();    
-    
-  return std::pow(_integral_value/crack_front_length, 1.0/_m);
+  return std::pow(value/_crack_front_length, 1.0/_m);
 }

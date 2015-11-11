@@ -4,34 +4,35 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-#ifndef WEIBULLSTRESS_H
-#define WEIBULLSTRESS_H
+#ifndef WEIBULLSTRESSATCRACKFRONTNODE_H
+#define WEIBULLSTRESSATCRACKFRONTNODE_H
 
 #include "ElementIntegralPostprocessor.h"
 #include "MaterialTensorCalculator.h"
 #include "CrackFrontDefinition.h"
 
 //Forward Declarations
-class WeibullStress;
+class WeibullStressAtCrackFrontNode;
 
 template<>
-InputParameters validParams<WeibullStress>();
+InputParameters validParams<WeibullStressAtCrackFrontNode>();
 
 /**
  * This postprocessor computes the Weibull stress
  *
  */
-class WeibullStress:
+class WeibullStressAtCrackFrontNode:
   public ElementIntegralPostprocessor,
   public MaterialTensorCalculator
 {
 public:
-  WeibullStress(const InputParameters & parameters);
+  WeibullStressAtCrackFrontNode(const InputParameters & parameters);
   virtual Real getValue();
 
 protected:
   virtual void initialSetup();
   virtual Real computeQpIntegral();
+  VariableValue & _scalar_q;
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;
@@ -39,12 +40,8 @@ protected:
   Real _m;
   Real _lambda;
   Real _yield_stress;
-  Real _r_max;
   bool _has_symmetry_plane;
   Real _cutoff;
-
-private:
-  bool _treat_as_2d;
 };
 
-#endif //WEIBULLSTRESS_H
+#endif //WEIBULLSTRESSATCRACKFRONTNODE_H

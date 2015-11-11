@@ -40,11 +40,11 @@ protected:
     TOPOLOGY
   };
 
-  enum WEIBULL_MESH_TYPE
-  {
-    RANDOM,
-    REGULAR
-  };
+  // enum WEIBULL_MESH_TYPE
+  // {
+  //   RANDOM,
+  //   REGULAR
+  // };
 
   unsigned int calcNumCrackFrontPoints();
 
@@ -84,15 +84,16 @@ protected:
   MooseEnum _q_function_type;
   bool _get_equivalent_k;
   bool _get_weibull_stress;
+  bool _get_weibull_at_crack_edges;
+  bool _get_weibull_at_crack_nodes;
   bool _get_weibull_stress_sif;
+  bool _get_weibull_stress_fe_mesh;
+  bool _get_weibull_princ_stress_diff;
+//  MooseEnum _weibull_mesh_type;
+  MooseEnum _crack_tip_shape;
   Real _weibull_modulus;
   Real _weibull_lambda;
-  MooseEnum _weibull_mesh_type;
   Real _weibull_rho;
-  Real _yield_stress;
-  bool _get_weibull_at_crack_edges;
-  Real _weibull_m;
-  Real _weibull_lambda;
   Real _yield_stress;
   Real _r_max;
   bool _use_displaced_mesh;

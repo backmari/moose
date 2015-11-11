@@ -968,6 +968,12 @@ CrackFrontDefinition::getCrackFrontBackwardSegmentLength(const unsigned int poin
   return _segment_lengths[point_index].first;
 }
 
+Real
+CrackFrontDefinition::getCrackFrontLength() const
+{
+  return _distances_along_front.back();
+}
+
 const RealVectorValue &
 CrackFrontDefinition::getCrackDirection(const unsigned int point_index) const
 {

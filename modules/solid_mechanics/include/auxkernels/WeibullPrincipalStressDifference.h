@@ -4,45 +4,31 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-#ifndef WEIBULLSTRESSFROMSIFS_H
-#define WEIBULLSTRESSFROMSIFS_H
+#ifndef WEIBULLPRINCIPALSTRESSDIFFERENCE_H
+#define WEIBULLPRINCIPALSTRESSDIFFERENCE_H
 
-#include "GeneralPostprocessor.h"
+#include "AuxKernel.h"
+#include "MaterialTensorCalculator.h"
 #include "CrackFrontDefinition.h"
-#include "RandomInterface.h"
 
-//Forward Declarations
-class WeibullStressFromSIFs;
-
-template<>
-InputParameters validParams<WeibullStressFromSIFs>();
-
-/**
- * This postprocessor computes the Weibull stress
- *
- */
-class WeibullStressFromSIFs:
-  public GeneralPostprocessor,
-  public RandomInterface
+class WeibullPrincipalStressDifference :
+  public AuxKernel,
+  public MaterialTensorCalculator
 {
-public:
-  WeibullStressFromSIFs(const InputParameters & parameters);
 
-  virtual void initialize();
-  virtual void execute();
-  virtual Real getValue();
+public:
+
+  WeibullPrincipalStressDifference(const InputParameters & parameters);
+
+  virtual ~WeibullPrincipalStressDifference() {}
 
 protected:
-  enum MESH_TYPE
-  {
-    RANDOM,
-    REGULAR
-  };
 
-  Real computeWeibullStress(PostprocessorValue ki, PostprocessorValue kii, PostprocessorValue kiii);
+  virtual void initialSetup();
+  virtual Real computeValue();
   Real computePrincipalStress(Real r, Real theta);
-  void generateRegularMesh();
-  void generateRandomMesh();
+  Real computePrincipalStress2(Real r, Real theta);
+
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;
@@ -50,6 +36,7 @@ protected:
   const PostprocessorValue & _kii_value;
   const PostprocessorValue & _kiii_value;
   MooseEnum _crack_tip_shape;
+  const MaterialProperty<SymmTensor> & _stress_tensor;
   Real _poissons_ratio;
   Real _m;
   Real _lambda;
@@ -57,11 +44,13 @@ protected:
   Real _r_max;
   Real _cutoff;
   Real _rho;
-  std::vector<Real> _r;
-  std::vector<Real> _theta;
-  unsigned int _npoints;
-  Real _dr;
-  Real _dtheta;
+
+private:
+
+  std::vector<Elem *> _intersected_elems;
 };
 
-#endif //WEIBULLSTRESSFROMSIFS_H
+template<>
+InputParameters validParams<WeibullPrincipalStressDifference>();
+
+#endif // ELEMENTSINTERSECTEDBYPLANE_H

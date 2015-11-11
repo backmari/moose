@@ -14,7 +14,7 @@ class ElementsIntersectedByPlane : public AuxKernel
 
 public:
 
-  ElementsIntersectedByPlane(const std::string & name, InputParameters parameters);
+  ElementsIntersectedByPlane(const InputParameters & parameters);
 
   virtual ~ElementsIntersectedByPlane() {}
 
