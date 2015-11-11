@@ -6,7 +6,7 @@
 /****************************************************************/
 #include "ElementsIntersectedByPlane.h"
 #include "PlaneTracing.h"
-
+#include "MooseMesh.h"
 #include <algorithm>
 
 template<>
@@ -23,7 +23,7 @@ InputParameters validParams<ElementsIntersectedByPlane>()
   return params;
 }
 
-ElementsIntersectedByPlane::ElementsIntersectedByPlane(const std::string & name, InputParameters parameters) : AuxKernel(name, parameters),
+ElementsIntersectedByPlane::ElementsIntersectedByPlane(const InputParameters & parameters) : AuxKernel(parameters),
 
   _p0( getParam<RealVectorValue>("point") ),
   _normal( getParam<RealVectorValue>("normal") ),
@@ -51,6 +51,8 @@ ElementsIntersectedByPlane::compute()
      */
     _var.setNodalValue(_plane_id);
   }
+  else
+    _var.setNodalValue(0);
 }
 
 Real

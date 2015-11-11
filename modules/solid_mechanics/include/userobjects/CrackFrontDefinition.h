@@ -40,6 +40,7 @@ public:
   const RealVectorValue & getCrackFrontTangent(const unsigned int point_index) const;
   Real getCrackFrontForwardSegmentLength(const unsigned int point_index) const;
   Real getCrackFrontBackwardSegmentLength(const unsigned int point_index) const;
+  Real getCrackFrontLength() const;
   const RealVectorValue & getCrackDirection(const unsigned int point_index) const;
   Real getDistanceAlongFront(const unsigned int point_index) const;
   bool hasAngleAlongFront() const;
