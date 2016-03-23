@@ -32,7 +32,7 @@ public:
 protected:
   virtual void initialSetup();
   virtual Real computeQpIntegral();
-  VariableValue & _scalar_q;
+  const VariableValue & _scalar_q;
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;

@@ -31,7 +31,7 @@ InputParameters validParams<WeibullPrincipalStressDifference>()
   params.addParam<Real>("crack_tip_radius", 0.0, "Radius of the blunt crack tip.");
   params.addParam<Real>("weibull_r_max","Max radius for Weibull stress calculation");
   params.set<MooseEnum>("quantity") = "MaxPrincipal";
-  params.set<MultiMooseEnum>("execute_on") = "timestep";
+  params.set<MultiMooseEnum>("execute_on") = "timestep_end";
 
   return params;
 }

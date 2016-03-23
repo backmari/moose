@@ -32,7 +32,7 @@ InputParameters validParams<WeibullStressOnFEMesh>()
   params.addParam<unsigned int>("symmetry_plane", "Account for a symmetry plane passing through the plane of the crack, normal to the specified axis (0=x, 1=y, 2=z)");
   params.addParam<Real>("crack_tip_radius","Radius of the blunt crack tip.");
   params.set<MooseEnum>("quantity") = "MaxPrincipal";
-  params.set<MultiMooseEnum>("execute_on") = "timestep";
+  params.set<MultiMooseEnum>("execute_on") = "timestep_end";
 
   return params;
 }
