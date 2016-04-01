@@ -64,6 +64,7 @@
 #include "WeibullStress.h"
 #include "WeibullStressOnFEMesh.h"
 #include "WeibullPrincipalStressDifference.h"
+#include "WeibullPrincipalStressDifference2.h"
 #include "ElementsContribToWeibull.h"
 #include "SolidMechanicsAction.h"
 #include "DomainIntegralAction.h"
@@ -125,6 +126,7 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerAux(ElementsOnLineAux);
   registerAux(ElementsIntersectedByPlane);
   registerAux(WeibullPrincipalStressDifference);
+  registerAux(WeibullPrincipalStressDifference2);
   registerAux(ElementsContribToWeibull);
 
   registerBoundaryCondition(DashpotBC);

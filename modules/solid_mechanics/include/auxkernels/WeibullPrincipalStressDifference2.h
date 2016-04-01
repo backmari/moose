@@ -4,48 +4,52 @@
 /*          All contents are licensed under LGPL V2.1           */
 /*             See LICENSE for full restrictions                */
 /****************************************************************/
-#ifndef WEIBULLSTRESS_H
-#define WEIBULLSTRESS_H
+#ifndef WEIBULLPRINCIPALSTRESSDIFFERENCE2_H
+#define WEIBULLPRINCIPALSTRESSDIFFERENCE2_H
 
-#include "ElementIntegralPostprocessor.h"
+#include "AuxKernel.h"
 #include "MaterialTensorCalculator.h"
 #include "CrackFrontDefinition.h"
 
-//Forward Declarations
-class WeibullStress;
-
-template<>
-InputParameters validParams<WeibullStress>();
-
-/**
- * This postprocessor computes the Weibull stress
- *
- */
-class WeibullStress:
-  public ElementIntegralPostprocessor,
+class WeibullPrincipalStressDifference2 :
+  public AuxKernel,
   public MaterialTensorCalculator
 {
+
 public:
-  WeibullStress(const InputParameters & parameters);
-  virtual Real getValue();
+
+  WeibullPrincipalStressDifference2(const InputParameters & parameters);
+
+  virtual ~WeibullPrincipalStressDifference2() {}
 
 protected:
+
   virtual void initialSetup();
-  virtual Real computeQpIntegral();
-  virtual Real computeIntegral();
+  virtual Real computeValue();
+  Real computePrincipalStress(Real r, Real theta);
+
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;
+  const PostprocessorValue & _ki_value;
+  const PostprocessorValue & _kii_value;
+  const PostprocessorValue & _kiii_value;
+  MooseEnum _crack_tip_shape;
   const MaterialProperty<SymmTensor> & _stress_tensor;
+  Real _poissons_ratio;
   Real _m;
   Real _lambda;
   Real _yield_stress;
   Real _r_max;
-  bool _has_symmetry_plane;
   Real _cutoff;
+  Real _rho;
 
 private:
-  bool _treat_as_2d;
+
+  std::vector<Elem *> _intersected_elems;
 };
 
-#endif //WEIBULLSTRESS_H
+template<>
+InputParameters validParams<WeibullPrincipalStressDifference2>();
+
+#endif // WEIBULLPRINCIPALSTRESSDIFFERENCE2_H
