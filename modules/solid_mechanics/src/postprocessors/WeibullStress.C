@@ -8,6 +8,9 @@
 //
 #include "WeibullStress.h"
 
+// libmesh includes
+#include "libmesh/quadrature.h"
+
 template<>
 InputParameters validParams<WeibullStress>()
 {
@@ -48,31 +51,57 @@ WeibullStress::initialSetup()
   _treat_as_2d = _crack_front_definition->treatAs2D();
 }
 
+// Real
+// WeibullStress::computeQpIntegral()
+// {
+//   Real value = 0;
+//   Real r;
+//   Real theta;
+//   _crack_front_definition->calculateRThetaToCrackFront(_q_point[_qp], _crack_front_point_index, r, theta);
+
+//   if (r < _r_max)
+//   {
+//     const SymmTensor & tensor(_stress_tensor[_qp]);
+//     RealVectorValue direction;
+//     Real principal_stress = getTensorQuantity(tensor, &_q_point[_qp], direction);
+//     if (principal_stress > _cutoff && principal_stress < 3*_yield_stress)
+//       value = std::pow(principal_stress,_m);
+//   }
+  
+//   return value;
+// }
+
 Real
 WeibullStress::computeQpIntegral()
 {
-  // const SymmTensor & tensor(_stress_tensor[_qp]);
-  // RealVectorValue direction;
+  mooseError("From WeibullStress: computeQpIntegral() is not defined");
+  return 0;
+}
 
-  // Real principal_stress = getTensorQuantity(tensor, &_q_point[_qp], direction);
-  // Real value = 0;
-  // if (principal_stress > _cutoff && principal_stress < 3*_yield_stress)
-  //   value = std::pow(principal_stress,_m);
+Real
+WeibullStress::computeIntegral()
+{
+  Real value = 0.0;
+  Real principal_stress = 0.0;
+  RealVectorValue direction;
 
-  Real value = 0;
-  Real r;
-  Real theta;
-  _crack_front_definition->calculateRThetaToCrackFront(_q_point[_qp], _crack_front_point_index, r, theta);
-
-  if (r < _r_max)
+  for (_qp=0; _qp<_qrule->n_points(); _qp++)
   {
     const SymmTensor & tensor(_stress_tensor[_qp]);
-    RealVectorValue direction;
-    Real principal_stress = getTensorQuantity(tensor, &_q_point[_qp], direction);
-    if (principal_stress > _cutoff && principal_stress < 3*_yield_stress)
-      value = std::pow(principal_stress,_m);
+    principal_stress += _JxW[_qp]*_coord[_qp]*getTensorQuantity(tensor, &_q_point[_qp], direction);
   }
-  
+  //Is this correct for all the possible cases of element types?
+  principal_stress /= _current_elem_volume;
+
+//  if (principal_stress > _cutoff  && principal_stress < 4 * _yield_stress)
+//    value = std::pow(principal_stress, _m);
+
+  Real r;
+  Real theta;
+  _crack_front_definition->calculateRThetaToCrackFront(_current_elem->centroid(), _crack_front_point_index, r, theta);
+  if (r < 0.5)
+    value = std::pow(principal_stress, _m);
+
   return value;
 }
 
