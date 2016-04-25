@@ -60,6 +60,7 @@ InputParameters validParams<DomainIntegralAction>()
   params.addParam<Real>("crack_tip_radius","Radius of the blunt crack tip");
   MooseEnum tip_shape("Sharp Blunt","Sharp");
   params.addParam<MooseEnum>("crack_tip_shape", tip_shape, "Shape of the crack tip. Choices are: " + tip_shape.getRawNames());
+  params.addParam<FunctionName>("max_princ_cutoff_function", "Maximum principal stress cutoff as a function of stress intensity factor K");
   return params;
 }
 
@@ -230,6 +231,9 @@ DomainIntegralAction::DomainIntegralAction(const InputParameters & params):
 
     _weibull_rho = getParam<Real>("crack_tip_radius");
   }
+
+  if (isParamValid("max_princ_cutoff_function"))
+    _princ_stress_cutoff_function = getParam<FunctionName>("max_princ_cutoff_function");
 }
 
 DomainIntegralAction::~DomainIntegralAction()
@@ -718,6 +722,7 @@ DomainIntegralAction::act()
       params.set<Real>("lambda") = _weibull_lambda;
       params.set<Real>("yield_stress") = _yield_stress;
       params.set<Real>("weibull_r_max") = _r_max;
+      params.set<FunctionName>("max_princ_cutoff_function") = _princ_stress_cutoff_function;
       params.set<unsigned int>("crack_front_point_index") = 0;
       if (_has_symmetry_plane)
         params.set<unsigned int>("symmetry_plane") = _symmetry_plane;
