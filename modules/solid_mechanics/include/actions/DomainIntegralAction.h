@@ -95,6 +95,7 @@ protected:
   Real _weibull_rho;
   Real _yield_stress;
   Real _r_max;
+  FunctionName _princ_stress_cutoff_function;
   bool _use_displaced_mesh;
   std::vector<unsigned int> _ring_vec;
 };

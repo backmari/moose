@@ -13,6 +13,7 @@
 
 //Forward Declarations
 class WeibullStress;
+class PiecewiseLinear;
 
 template<>
 InputParameters validParams<WeibullStress>();
@@ -27,22 +28,26 @@ class WeibullStress:
 {
 public:
   WeibullStress(const InputParameters & parameters);
+  virtual ~WeibullStress();
   virtual Real getValue();
 
 protected:
   virtual void initialSetup();
   virtual Real computeQpIntegral();
-  virtual Real computeIntegral();
+//  virtual Real computeIntegral();
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;
+  MaterialTensorCalculator * _von_mises_calculator;
+  MaterialTensorCalculator * _max_princ_calculator;
   const MaterialProperty<SymmTensor> & _stress_tensor;
   Real _m;
   Real _lambda;
   Real _yield_stress;
   Real _r_max;
   bool _has_symmetry_plane;
-  Real _cutoff;
+  Real _max_cutoff;
+  Function * _cutoff_function;
 
 private:
   bool _treat_as_2d;

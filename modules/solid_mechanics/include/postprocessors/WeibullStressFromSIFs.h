@@ -9,7 +9,6 @@
 
 #include "GeneralPostprocessor.h"
 #include "CrackFrontDefinition.h"
-#include "RandomInterface.h"
 
 //Forward Declarations
 class WeibullStressFromSIFs;
@@ -22,8 +21,7 @@ InputParameters validParams<WeibullStressFromSIFs>();
  *
  */
 class WeibullStressFromSIFs:
-  public GeneralPostprocessor,
-  public RandomInterface
+  public GeneralPostprocessor
 {
 public:
   WeibullStressFromSIFs(const InputParameters & parameters);
@@ -33,16 +31,10 @@ public:
   virtual Real getValue();
 
 protected:
-  enum MESH_TYPE
-  {
-    RANDOM,
-    REGULAR
-  };
 
   Real computeWeibullStress(PostprocessorValue ki, PostprocessorValue kii, PostprocessorValue kiii);
   Real computePrincipalStress(Real r, Real theta);
   void generateRegularMesh();
-  void generateRandomMesh();
   const CrackFrontDefinition * const _crack_front_definition;
   bool _has_crack_front_point_index;
   const unsigned int _crack_front_point_index;

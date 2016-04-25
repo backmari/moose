@@ -55,6 +55,7 @@
 #include "CavityPressureUOAction.h"
 #include "PresetVelocity.h"
 #include "InteractionIntegralBenchmarkBC.h"
+#include "MaterialTensorExtremeValue.h"
 #include "MaterialTensorIntegral.h"
 #include "CrackDataSampler.h"
 #include "WeibullStress.h"
@@ -167,6 +168,7 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerPostprocessor(CrackFrontData);
   registerPostprocessor(InteractionIntegral);
   registerPostprocessor(CavityPressurePostprocessor);
+  registerPostprocessor(MaterialTensorExtremeValue);
   registerPostprocessor(MaterialTensorIntegral);
   registerPostprocessor(MixedModeEquivalentK);
   registerPostprocessor(WeibullStress);
