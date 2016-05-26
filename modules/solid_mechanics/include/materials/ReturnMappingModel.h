@@ -43,7 +43,7 @@ protected:
                                      const SymmTensor & /*inelasticStrainIncrement*/) {}
 
   virtual void iterationInitialize(unsigned /*qp*/, Real /*scalar*/) {}
-  virtual Real computeResidual(unsigned qp, Real effectiveTrialStress, Real scalar) = 0;
+  virtual Real computeResidual(const unsigned int qp, const Real effectiveTrialStress, const Real scalar, Real & reference_residual) = 0;
   virtual Real computeDerivative(unsigned qp, Real effectiveTrialStress, Real scalar) = 0;
   virtual void iterationFinalize(unsigned /*qp*/, Real /*scalar*/) {}
 
@@ -52,7 +52,6 @@ protected:
   const bool _output_iteration_info_on_error;
   const Real _relative_tolerance;
   const Real _absolute_tolerance;
-  const Real _epsilon_acceptable_tolerance;
   Real _effective_strain_increment;
 
 private:
@@ -62,7 +61,8 @@ private:
                         const unsigned int & it,
                         const Real & effective_trial_stress,
                         const Real & scalar,
-                        const Real & residual);
+                        const Real & residual,
+                        const Real & reference_residual);
 
   void update_bounds(const Real & scalar,
                      const Real & residual,

@@ -59,17 +59,21 @@ CLSHPlasticModel::computeStressInitialize(unsigned qp, Real effectiveTrialStress
 }
 
 Real
-CLSHPlasticModel::computeResidual(unsigned qp, Real effectiveTrialStress, Real scalar)
+CLSHPlasticModel::computeResidual(const unsigned int qp, const Real effectiveTrialStress, const Real scalar, Real & reference_residual)
 {
-  Real residual(0);
+  Real residual = 0.0;
   if ( _yield_condition > 0 )
   {
-    Real xflow = _c_beta*(effectiveTrialStress - (3. * _shear_modulus * scalar) - _hardening_variable[qp] - _yield_stress);
-    Real xphi = _c_alpha*std::sinh(xflow);
-    _xphidp = -3.*_shear_modulus*_c_alpha*_c_beta*std::cosh(xflow);
-    _xphir = -_c_alpha*_c_beta*std::cosh(xflow);
+    Real xflow = _c_beta * (effectiveTrialStress - (3. * _shear_modulus * scalar) - _hardening_variable[qp] - _yield_stress);
+    Real xphi = _c_alpha * std::sinh(xflow);
+    _xphidp = -3. * _shear_modulus * _c_alpha * _c_beta * std::cosh(xflow);
+    _xphir = -_c_alpha * _c_beta * std::cosh(xflow);
     residual = xphi - scalar/_dt;
+    reference_residual = (xphi > scalar / _dt ? xphi : scalar / _dt);
   }
+  else
+    reference_residual = 1.0;
+
   return residual;
 }
 
@@ -83,11 +87,9 @@ CLSHPlasticModel::iterationFinalize(unsigned qp, Real scalar)
 Real
 CLSHPlasticModel::computeDerivative(unsigned /*qp*/, Real /*effectiveTrialStress*/, Real /*scalar*/)
 {
-  Real derivative(1);
+  Real derivative = 1.0;
   if ( _yield_condition > 0 )
-  {
-    derivative = _xphidp + _hardening_constant*_xphir - 1/_dt;
-  }
+    derivative = _xphidp + _hardening_constant * _xphir - 1.0 / _dt;
   return derivative;
 }
 

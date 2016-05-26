@@ -89,18 +89,22 @@ IsotropicPlasticity::computeStressFinalize(unsigned qp, const SymmTensor & plast
 }
 
 Real
-IsotropicPlasticity::computeResidual(unsigned qp, Real effectiveTrialStress, Real scalar)
+IsotropicPlasticity::computeResidual(const unsigned int qp, const Real effectiveTrialStress, const Real scalar, Real & reference_residual)
 {
-  Real residual(0);
-  _hardening_slope = 0;
-  if (_yield_condition > 0)
+  Real residual = 0.0;
+  _hardening_slope = 0.0;
+  if (_yield_condition > 0.0)
   {
     _hardening_slope = computeHardeningDerivative(qp, scalar);
     _hardening_variable[qp] = computeHardeningValue(qp, scalar);
 
     // The order here is important.  The final term can be small, and we don't want it lost to roundoff.
-    residual = (effectiveTrialStress - _hardening_variable[qp] - _yield_stress) - (3 * _shear_modulus * scalar);
+    residual = (effectiveTrialStress - _hardening_variable[qp] - _yield_stress) - (3.0 * _shear_modulus * scalar);
+    reference_residual = effectiveTrialStress;
   }
+  else
+    reference_residual = 1.0;
+
   return residual;
 }
 

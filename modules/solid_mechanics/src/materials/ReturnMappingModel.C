@@ -32,13 +32,12 @@ ReturnMappingModel::ReturnMappingModel(const InputParameters & parameters) :
     _output_iteration_info_on_error(getParam<bool>("output_iteration_info_on_error")),
     _relative_tolerance(parameters.get<Real>("relative_tolerance")),
     _absolute_tolerance(parameters.get<Real>("absolute_tolerance")),
-    _epsilon_acceptable_tolerance(1e-18),
     _effective_strain_increment(0.0)
 {
   if (_relative_tolerance > 1e-12)
     mooseWarning("relative_tolerance was set to: " << _relative_tolerance << " for model: " << _name << " Using values greater than the default tolerance (1e-12) is not recommended.");
   if (_absolute_tolerance > 1e-15)
-    mooseWarning("absolute_tolerance was set to: " << _absolute_tolerance << " for model: " << _name << " Using values greater than the default tolerance (1e-15) is not recommended.");
+    mooseWarning("absolute_tolerance was set to: " << _absolute_tolerance << " for model: " << _name << " Using values greater than the default tolerance (1e-18) is not recommended.");
   if (_max_its < 100)
     mooseWarning("max_its was set to: " << _max_its << " for model: " << _name << " Using values less than the default (100) is not recommended.");
 }
@@ -98,20 +97,21 @@ ReturnMappingModel::computeStress(const Elem & /*current_elem*/, unsigned qp,
   Real resid_lower_bound = 0.0;
   unsigned int it = 0;
   Real residual_old = 0.0;
+  Real reference_residual = 0.0;
 
   std::string iter_output;
 
   iterationInitialize(qp, scalar);
-  Real residual = computeResidual(qp, effective_trial_stress, scalar);
+  Real residual = computeResidual(qp, effective_trial_stress, scalar, reference_residual);
   iterationFinalize(qp, scalar);
   Real init_resid_sign = (residual < 0.0 ? -1.0 : 1.0);
 
-  output_iter_info(iter_output, it, effective_trial_stress, scalar, residual);
+  output_iter_info(iter_output, it, effective_trial_stress, scalar, residual, reference_residual);
 
   if (effective_trial_stress != 0.0)
   {
     while (it < _max_its &&
-           !converged(residual, effective_trial_stress))
+           !converged(residual, reference_residual))
     {
       ++it;
       residual_old = residual;
@@ -121,15 +121,15 @@ ReturnMappingModel::computeStress(const Elem & /*current_elem*/, unsigned qp,
       scalar = scalar_old + scalar_increment;
 
       iterationInitialize(qp, scalar);
-      residual = computeResidual(qp, effective_trial_stress, scalar);
+      residual = computeResidual(qp, effective_trial_stress, scalar, reference_residual);
       iterationFinalize(qp, scalar);
 
       update_bounds(scalar, residual, init_resid_sign, scalar_upper_bound, scalar_lower_bound,
                     resid_upper_bound, resid_lower_bound, iter_output, false);
 
-      if (converged(residual, effective_trial_stress))
+      if (converged(residual, reference_residual))
       {
-        output_iter_info(iter_output, it, effective_trial_stress, scalar, residual);
+        output_iter_info(iter_output, it, effective_trial_stress, scalar, residual, reference_residual);
         break;
       }
       else
@@ -178,25 +178,34 @@ ReturnMappingModel::computeStress(const Elem & /*current_elem*/, unsigned qp,
         {
           scalar = scalar_old + scalar_increment;
           iterationInitialize(qp, scalar);
-          residual = computeResidual(qp, effective_trial_stress, scalar);
+          residual = computeResidual(qp, effective_trial_stress, scalar, reference_residual);
           iterationFinalize(qp, scalar);
 
           update_bounds(scalar, residual, init_resid_sign, scalar_upper_bound, scalar_lower_bound,
                         resid_upper_bound, resid_lower_bound, iter_output, bounded);
         }
 
+//        iter_output << "BWS eps factor1 = "
+//                    << (scalar_upper_bound - scalar_lower_bound) / (PETSC_MACHINE_EPSILON * scalar_upper_bound)
+//                    << " eps factor2 = "
+//                    << std::abs(scalar_increment) / (scalar_old  * PETSC_MACHINE_EPSILON)
+//                    << std::endl;
+
         // If the difference between the upper and lower bounds is too close to machine epsilon
         // or the scalar increment is too close to machine epsilon, break
-//        if ((std::abs(residual) <  _epsilon_acceptable_tolerance) &&
+//        if (converged(1e3 * residual, reference_residual) &&
 //            ((scalar_lower_bound > 0.0 &&
 //              (scalar_upper_bound - scalar_lower_bound) / (PETSC_MACHINE_EPSILON * scalar_lower_bound) <= 10.0) ||
 //             (residual != 0.0 &&
 //              scalar_old != 0.0 &&
 //              std::abs(scalar_increment) < 10.0 * PETSC_MACHINE_EPSILON * scalar_old)))
+//        {
+//          output_iter_info(iter_output, it, effective_trial_stress, scalar, residual, reference_residual);
 //          break;
+//        }
       }
 
-      output_iter_info(iter_output, it, effective_trial_stress, scalar, residual);
+      output_iter_info(iter_output, it, effective_trial_stress, scalar, residual, reference_residual);
     }
 
     if (_output_iteration_info)
@@ -210,7 +219,7 @@ ReturnMappingModel::computeStress(const Elem & /*current_elem*/, unsigned qp,
     }
 
     if (it == _max_its &&
-        !converged(residual, effective_trial_stress))
+        !converged(residual, reference_residual))
     {
       if (_output_iteration_info_on_error)
         Moose::err << iter_output.str();
@@ -245,7 +254,8 @@ ReturnMappingModel::output_iter_info(std::stringstream & iter_output,
                                      const unsigned int & it,
                                      const Real & effective_trial_stress,
                                      const Real & scalar,
-                                     const Real & residual)
+                                     const Real & residual,
+                                     const Real & reference_residual)
 {
   if (_output_iteration_info == true || _output_iteration_info_on_error == true)
   {
@@ -254,7 +264,7 @@ ReturnMappingModel::output_iter_info(std::stringstream & iter_output,
       << " trl_strs=" << effective_trial_stress
       << " scalar="   << scalar
       << " residual=" << residual
-      << " rel_res="  << std::abs(residual) / effective_trial_stress
+      << " rel_res="  << std::abs(residual) / reference_residual
       << " rel_tol="  << _relative_tolerance
       << " abs_res="  << std::abs(residual)
       << " abs_tol="  << _absolute_tolerance
