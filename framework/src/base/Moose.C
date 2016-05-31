@@ -84,6 +84,7 @@
 #include "DiffusionFluxBC.h"
 #include "PostprocessorDirichletBC.h"
 #include "OneDEqualValueConstraintBC.h"
+#include "RemoveRigidBodyMotionFunctionDirichletBC.h"
 
 // auxkernels
 #include "ConstantAux.h"
@@ -500,6 +501,7 @@ registerObjects(Factory & factory)
   registerBoundaryCondition(DiffusionFluxBC);
   registerBoundaryCondition(PostprocessorDirichletBC);
   registerBoundaryCondition(OneDEqualValueConstraintBC);
+  registerBoundaryCondition(RemoveRigidBodyMotionFunctionDirichletBC);
 
   // dirac kernels
   registerDiracKernel(ConstantPointSource);
