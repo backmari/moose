@@ -36,7 +36,7 @@ protected:
   /**
    * Evaluate the function at the current quadrature point and timestep.
    */
-  Real f();
+  virtual Real f();
 
   RealVectorValue _point;
 };
