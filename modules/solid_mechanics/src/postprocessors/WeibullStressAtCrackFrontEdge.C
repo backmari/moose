@@ -105,9 +105,9 @@ WeibullStressAtCrackFrontEdge::computeQpIntegral()
   {
     const SymmTensor & tensor(_stress_tensor[_qp]);
     RealVectorValue direction;
-    Real principal_stress = getTensorQuantity(tensor, &_q_point[_qp], direction);
-    if (principal_stress > _cutoff && principal_stress < 3*_yield_stress)
-      value = std::pow(principal_stress,_m);
+    Real max_principal_stress = getTensorQuantity(tensor, _q_point[_qp], direction);
+    if (max_principal_stress > _cutoff)
+      value = std::pow(max_principal_stress, _m);
   }
 
   Real edge_length = 1.0;

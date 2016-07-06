@@ -46,7 +46,7 @@ MaterialTensorExtremeValue::computeQpValue()
 {
   RealVectorValue direction;
   Real prop_value = _material_tensor_calculator.getTensorQuantity(_tensor[_qp],
-                                                       &_q_point[_qp],
+                                                       _q_point[_qp],
                                                        direction);
   switch (_type)
   {

@@ -64,7 +64,7 @@ ElementsContribToWeibull::computeValue()
   {
     const SymmTensor & tensor(_stress_tensor[_qp]);
     RealVectorValue direction;
-    Real principal_stress = getTensorQuantity(tensor, &_q_point[_qp], direction);
+    Real principal_stress = getTensorQuantity(tensor, _q_point[_qp], direction);
     if (principal_stress > _cutoff && principal_stress < 3*_yield_stress)
       value = std::pow(principal_stress,_m);
   }

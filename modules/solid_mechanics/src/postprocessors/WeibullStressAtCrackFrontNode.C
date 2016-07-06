@@ -53,7 +53,7 @@ WeibullStressAtCrackFrontNode::computeQpIntegral()
   const SymmTensor & tensor(_stress_tensor[_qp]);
   RealVectorValue direction;
 
-  Real principal_stress = getTensorQuantity(tensor,&_q_point[_qp],direction);
+  Real principal_stress = getTensorQuantity(tensor, _q_point[_qp], direction);
   Real value(0.0);
   if (principal_stress > _cutoff && _scalar_q[_qp] > 0.0)
   {

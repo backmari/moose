@@ -83,7 +83,7 @@ WeibullPrincipalStressDifference::computeValue()
   const SymmTensor & tensor(_stress_tensor[_qp]);
   RealVectorValue direction;
     
-  Real principal_stress1 = getTensorQuantity(tensor, &p, direction);
+  Real principal_stress1 = getTensorQuantity(tensor, p, direction);
   Real principal_stress2 = computePrincipalStress(r, theta);
 
   value = (principal_stress2 - principal_stress1)/ principal_stress2;

@@ -75,6 +75,7 @@
   m = 15.0
   lambda = 2.0
   yield_stress = 50
+  weibull_r_max = 5
 []
 
 [SolidMechanics]
@@ -207,12 +208,16 @@
   [./lin_its]
     type = NumLinearIterations
   [../]
+
+  [./maxprinc]
+    type = ElementExtremeValue
+    variable = principal
+  [../]
 []
 
 
 [Outputs]
   file_base = center_crack2d_out
-  output_initial = true
   exodus = true
   [./console]
     type = Console

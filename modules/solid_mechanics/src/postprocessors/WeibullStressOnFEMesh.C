@@ -120,7 +120,7 @@ WeibullStressOnFEMesh::computeQpIntegral()
   {
     const SymmTensor & tensor(_stress_tensor[_qp]);
     RealVectorValue direction;
-    Real principal_stress1 = getTensorQuantity(tensor, &_q_point[_qp], direction);
+    Real principal_stress1 = getTensorQuantity(tensor, _q_point[_qp], direction);
     
     Real principal_stress2 = computePrincipalStress(r, theta);
 

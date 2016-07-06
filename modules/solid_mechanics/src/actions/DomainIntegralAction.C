@@ -213,12 +213,12 @@ DomainIntegralAction::DomainIntegralAction(const InputParameters & params):
       mooseError("DomainIntegral error: must set Weibull modulus m, cut-off lambda and yield stress for Weibull stress calculation.");
   }
 
-  if (_get_weibull_at_crack_edges || _get_weibull_stress_sif)
+  if (_get_weibull_at_crack_edges || _get_weibull_stress_sif || _get_weibull_stress)
   {
     if (isParamValid("weibull_r_max"))
       _r_max = getParam<Real>("weibull_r_max");
     else
-      mooseError("DomainIntegral error: must set r_max for weibull_at_crack_edges = true and weibull_stress_sif = true");
+      mooseError("DomainIntegral error: must set r_max for weibull_at_crack_edges = true and weibull_stress_sif = true and weibull_stress = true");
   }
 
   if (_get_weibull_at_crack_nodes && _q_function_type == GEOMETRY)
@@ -730,6 +730,7 @@ DomainIntegralAction::act()
       pp_name_stream<<pp_base_name;
       _problem->addPostprocessor(pp_type_name,pp_base_name,params);
     }
+
     if (_get_weibull_stress_sif)
     {
       std::string pp_base_name("WS_SIF");

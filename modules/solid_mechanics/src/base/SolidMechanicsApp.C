@@ -54,7 +54,8 @@
 #include "StressDivergenceRSpherical.h"
 #include "RateDepSmearCrackModel.h"
 #include "RateDepSmearIsoCrackModel.h"
-
+#include "WeibullStress.h"
+#include "WeibullStressAtCrackFrontEdge.h"
 
 template<>
 InputParameters validParams<SolidMechanicsApp>()
@@ -137,6 +138,8 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerPostprocessor(InteractionIntegral);
   registerPostprocessor(MaterialTensorIntegralSM);
   registerPostprocessor(MixedModeEquivalentK);
+  registerPostprocessor(WeibullStress);
+  registerPostprocessor(WeibullStressAtCrackFrontEdge);
 
   registerVectorPostprocessor(CrackDataSampler);
   registerVectorPostprocessor(LineMaterialSymmTensorSampler);
