@@ -72,12 +72,12 @@ Predictor::shouldApply()
   const Real & old_time = _fe_problem.timeOld();
   for (unsigned int i = 0; i < _skip_times.size() && should_apply; ++i)
   {
-    if (MooseUtils::absoluteFuzzyEqual(current_time, _skip_times[i]))
+    if (MooseUtils::absoluteFuzzyEqual(current_time, _skip_times[i], 0.01))
       should_apply = false;
   }
   for (unsigned int i = 0; i < _skip_times_old.size() && should_apply; ++i)
   {
-    if (MooseUtils::absoluteFuzzyEqual(old_time, _skip_times_old[i]))
+    if (MooseUtils::absoluteFuzzyEqual(old_time, _skip_times_old[i], 0.01))
       should_apply = false;
   }
   return should_apply;
