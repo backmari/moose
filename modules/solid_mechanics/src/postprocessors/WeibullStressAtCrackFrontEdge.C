@@ -84,6 +84,8 @@ WeibullStressAtCrackFrontEdge::initialSetup()
 
     Moose::elementsIntersectedByPlane(pmid, normalmid, _mesh.getMesh(), _intersected_elems);
   }
+
+  _max_weibull_stress = 0.0;
 }
 
 void
@@ -121,8 +123,16 @@ Real
 WeibullStressAtCrackFrontEdge::getValue()
 {
   gatherSum(_integral_value);
-//  if (_has_symmetry_plane)
-//    _integral_value *= 2.0;
 
-  return std::pow(_integral_value, 1.0/_m);
+  Real value = std::pow(_integral_value, 1.0 / _m);
+  if (_has_symmetry_plane)
+    value *= std::pow(2.0, 1.0 / _m);
+
+  //Weibull stress cannot decrease
+  if (value < _max_weibull_stress)
+    value = _max_weibull_stress;
+  else if (value > _max_weibull_stress)
+    _max_weibull_stress = value;
+
+  return value;
 }

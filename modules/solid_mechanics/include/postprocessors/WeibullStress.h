@@ -48,6 +48,7 @@ protected:
   bool _has_symmetry_plane;
   Real _cutoff;
   //  Function * _cutoff_function;
+  Real _max_weibull_stress;
 
 private:
   bool _treat_as_2d;

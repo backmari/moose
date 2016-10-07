@@ -69,6 +69,7 @@ void
 WeibullStress::initialSetup()
 {
   _treat_as_2d = _crack_front_definition->treatAs2D();
+  _max_weibull_stress = 0.0;
 }
 
 Real
@@ -139,10 +140,14 @@ WeibullStress::getValue()
   if (!_treat_as_2d)
     crack_front_length = _crack_front_definition->getCrackFrontLength();    
 
-  Moose::out<<"result "<<std::pow(_integral_value/crack_front_length, 1.0/_m)<<" "<<_integral_value<<" "<<crack_front_length<<" "<<_m<<" "<<_treat_as_2d<<std::endl;
+  Real value = std::pow(_integral_value / crack_front_length, 1.0 / _m);
+  if (_has_symmetry_plane)
+    value *= std::pow(2.0, 1.0 / _m);
 
-  if (std::isnan(_integral_value) == true)
-    Moose::out<<"NAN "<<_integral_value<<std::endl;
+  if (value < _max_weibull_stress)
+    value = _max_weibull_stress;
+  else if (value > _max_weibull_stress)
+    _max_weibull_stress = value;
 
-  return std::pow(_integral_value/crack_front_length, 1.0/_m);
+  return value;
 }

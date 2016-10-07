@@ -46,6 +46,7 @@ protected:
   Real _r_max;
   bool _has_symmetry_plane;
   Real _cutoff;
+  Real _max_weibull_stress;
 
 private:
   std::vector<Elem *> _intersected_elems;

@@ -690,6 +690,8 @@ DomainIntegralAction::act()
       params.set<Real>("yield_stress") = _yield_stress;
       params.set<Real>("weibull_r_max") = _r_max;
       params.set<MultiMooseEnum>("execute_on") = "timestep_end";
+      if (_has_symmetry_plane)
+        params.set<unsigned int>("symmetry_plane") = _symmetry_plane;
 
       if (_treat_as_2d)
       {

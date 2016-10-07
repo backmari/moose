@@ -99,7 +99,7 @@ ReturnMappingModel::computeStress(const Elem & /*current_elem*/, unsigned qp,
   Real residual_old = 0.0;
   Real reference_residual = 0.0;
 
-  std::string iter_output;
+  std::stringstream iter_output;
 
   iterationInitialize(qp, scalar);
   Real residual = computeResidual(qp, effective_trial_stress, scalar, reference_residual);
