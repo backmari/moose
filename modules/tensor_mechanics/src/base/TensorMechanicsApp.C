@@ -161,6 +161,7 @@
 #include "Mass.h"
 #include "TorqueReaction.h"
 #include "MaterialTensorIntegral.h"
+#include "MaterialPropertyIncrementDT.h"
 
 #include "LineMaterialRankTwoSampler.h"
 #include "LineMaterialRankTwoScalarSampler.h"
@@ -345,6 +346,7 @@ TensorMechanicsApp::registerObjects(Factory & factory)
   registerPostprocessor(Mass);
   registerPostprocessor(TorqueReaction);
   registerPostprocessor(MaterialTensorIntegral);
+  registerPostprocessor(MaterialPropertyIncrementDT);
 
   registerVectorPostprocessor(LineMaterialRankTwoSampler);
   registerVectorPostprocessor(LineMaterialRankTwoScalarSampler);

@@ -1,0 +1,8 @@
+[Tests]
+  [./isotropic_plasticity_finite]
+    type = Exodiff
+    input = 'isotropic_plastic_strain_increment_dt.i'
+    exodiff = 'isotropic_plastic_strain_increment_dt_out.e'
+    compiler = 'CLANG GCC'
+  [../]
+[]
